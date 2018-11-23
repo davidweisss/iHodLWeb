@@ -1,0 +1,8 @@
+*.swp
+server/semantic*
+server/semantic.json*
+-lock*
+server/node_modules*
+node_modules*
+*-lock*
+semantic.json
