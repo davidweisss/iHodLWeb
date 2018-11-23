@@ -11,6 +11,7 @@ var https_options = {
 var PORT = 443;
 var HOST = '0.0.0.0';
 app = express();
+
 app.get('/', function (req, res) {
 	res.sendFile('/home/davidweisss/iHodLWeb/app/index.html')
 })
