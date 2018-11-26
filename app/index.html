@@ -1,23 +1,234 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
-		<script
-					 type="application/json"
-					 src="https://code.jquery.com/jquery-3.1.1.min.js"
-      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+<html>
+<head>
+  <!-- Standard Meta -->
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <!-- Site Properties -->
+  <title>iHodL</title>
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/reset.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/site.css">
+
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/container.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/grid.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/header.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/image.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/menu.css">
+
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/divider.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/dropdown.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/segment.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/button.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/list.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/icon.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/sidebar.css">
+  <link rel="stylesheet" type="text/css" href="/semantic/dist/components/transition.css">
+  <script
+					 src="https://code.jquery.com/jquery-3.3.1.min.js"
+      integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
       crossorigin="anonymous"></script>
-		<script src="app/semantic/dist/semantic.min.js" type="application/json"></script>
-		<meta charset="utf-8">
-		<title>iHodL</title>
-	</head>
-	<body>
-		<h1>iHodL</h1>
-		<h2>b ur own bank w btc</h2>
-		
-		<button class="ui button">
-			 Get 
-		</button>
-	Pay to this address: <br>35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP
-	</body>
+  <style type="text/css">
+
+    .hidden.menu {
+      display: none;
+    }
+
+    .masthead.segment {
+      min-height: 700px;
+      padding: 1em 0em;
+    }
+    .masthead .logo.item img {
+      margin-right: 1em;
+    }
+    .masthead .ui.menu .ui.button {
+      margin-left: 0.5em;
+    }
+    .masthead h1.ui.header {
+      margin-top: 3em;
+      margin-bottom: 0em;
+      font-size: 4em;
+      font-weight: normal;
+    }
+    .masthead h2 {
+      font-size: 1.7em;
+      font-weight: normal;
+    }
+
+    .ui.vertical.stripe {
+      padding: 8em 0em;
+    }
+    .ui.vertical.stripe h3 {
+      font-size: 2em;
+    }
+    .ui.vertical.stripe .button + h3,
+    .ui.vertical.stripe p + h3 {
+      margin-top: 3em;
+    }
+    .ui.vertical.stripe .floated.image {
+      clear: both;
+    }
+    .ui.vertical.stripe p {
+      font-size: 1.33em;
+    }
+    .ui.vertical.stripe .horizontal.divider {
+      margin: 3em 0em;
+    }
+
+    .quote.stripe.segment {
+      padding: 0em;
+    }
+    .quote.stripe.segment .grid .column {
+      padding-top: 5em;
+      padding-bottom: 5em;
+    }
+
+    .footer.segment {
+      padding: 5em 0em;
+    }
+
+    .secondary.pointing.menu .toc.item {
+      display: none;
+    }
+
+    @media only screen and (max-width: 700px) {
+      .ui.fixed.menu {
+        display: none !important;
+      }
+      .secondary.pointing.menu .item,
+      .secondary.pointing.menu .menu {
+        display: none;
+      }
+      .secondary.pointing.menu .toc.item {
+        display: block;
+      }
+      .masthead.segment {
+        min-height: 350px;
+      }
+      .masthead h1.ui.header {
+        font-size: 2em;
+        margin-top: 1.5em;
+      }
+      .masthead h2 {
+        margin-top: 0.5em;
+        font-size: 1.5em;
+      }
+    }
+
+
+  </style>
+
+  <script src="assets/library/jquery.min.js"></script>
+  <script src="../dist/components/visibility.js"></script>
+  <script src="../dist/components/sidebar.js"></script>
+  <script src="../dist/components/transition.js"></script>
+</head>
+<body>
+
+<!-- Page Contents -->
+<div class="pusher">
+  <div class="ui inverted vertical masthead center aligned segment">
+
+    <div class="ui text container">
+      <h1 class="ui inverted header">
+	    iHodL
+	    </h1>
+	        <h2>Be your own bank with Bitcoin</h2>
+		<form action="http://google.com">
+			<a href="get.html" class="ui huge primary button">Start<i class="right arrow icon"></i></a>
+		</form>
+    </div>
+
+  </div>
+
+  <div class="ui vertical stripe segment">
+    <div class="ui middle aligned stackable grid container">
+      <div class="row">
+        <div class="eight wide column">
+          <h3 class="ui header">Control your keys </h3>
+          <p>"Not your keys, not your Bitcoin" iHodL is a device that creates both your private and public keys completely offline.</p>
+	  <p>It is the easiest way to control and store your Bitcoins. You don't need an app or a connection. </p>
+          <h3 class="ui header">Safest way to create keys and to store your bitcoins</h3>
+          <ul>
+		  
+		  <li>	  100% Offline </li>
+		  <li>	  100% Secure</li>
+		  <li>	  100% Free and open source software  </li>
+		  <li>	  100% Open hardware with standard parts </li>
+	  </ul>
+        </div>
+        <div class="six wide right floated column">
+          <img src="ihodl.jpg" class="ui large bordered rounded image">
+        </div>
+      </div>
+      <div class="row">
+        <div class="center aligned column">
+          <a class="ui huge button" href="https://twitter.com/davidweisss/status/1060265154162688003">See demo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="ui vertical stripe quote segment">
+    <div class="ui equal width stackable internally celled grid">
+      <div class="center aligned row">
+        <div class="column">
+          <h3>"An open organization"</h3>
+          <p>Order from us or build your own.</p>
+        </div>
+        <div class="column">
+          <h3>"Awesome!"</h3>
+          <p>
+            <img src="https://pbs.twimg.com/profile_images/1038207279831678976/hQZ-mg_H_400x400.jpg" class="ui avatar image"> <b>Gabor Gurbacs</b> digital asset strategist/director at VanEck/MVIS 
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ui vertical stripe segment">
+    <div class="ui text container">
+      <h3 class="ui header">Cold storage</h3>
+      <p> Secure air-gapped key generation is a key pre-requitsite for any serious cold storage. We are working on a complete wallet solution.
+</p>
+      <a class="ui large button">Read More</a>
+      <h4 class="ui horizontal header divider">
+        <a href="#">Case Studies</a>
+      </h4>
+      <h3 class="ui header">We built this for ourselves</h3>
+      <p>Ours is primarily a group of kitesurfers looking for the perfect spot. It was easier to pay beer debt in the new world money... but what if it's not really yours like in a managed wallet (Coinbase etc.)</p>
+      <a class="ui large button">I'm Still Quite Interested</a>
+    </div>
+  </div>
+
+
+  <div class="ui inverted vertical footer segment">
+    <div class="ui container">
+      <div class="ui stackable inverted divided equal height stackable grid">
+        <div class="three wide column">
+          <h4 class="ui inverted header">About</h4>
+          <div class="ui inverted link list">
+            <a href="#" class="item">Contact Us</a>
+          </div>
+        </div>
+        <div class="three wide column">
+          <h4 class="ui inverted header">Services</h4>
+          <div class="ui inverted link list">
+            <a href="#" class="item">-Order iHodL</a>
+            <a href="#" class="item">FAQ</a>
+          </div>
+        </div>
+        <div class="seven wide column">
+          <h4 class="ui inverted header">Learn about Bitcoin</h4>
+          <p>Learn about Bitcoin.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+
 </html>
