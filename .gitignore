@@ -6,5 +6,5 @@ server/node_modules*
 node_modules*
 *-lock*
 semantic.json
-server/reservations
+reservations
 todo

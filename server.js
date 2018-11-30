@@ -16,12 +16,11 @@ var makeRequest = require("./bitmexAPI.js")
 app = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(express.static('/home/davidweisss/iHodLWeb/img/'))
 app.use(express.static('/home/davidweisss/iHodLWeb/public/'))
 
 app.get('/', function (req, res) {
 	console.log("Logging")
-	res.sendFile('/home/davidweisss/iHodLWeb/app/index.html')
+	res.sendFile('/home/davidweisss/iHodLWeb/index.html')
 })
 
 app.get('/xbtusd', function (req, res) {
