@@ -11,6 +11,8 @@ var https_options = {
 var PORT = 443;
 var HOST = '0.0.0.0';
 var bodyParser = require("body-parser")
+
+var makeRequest = require("./bitmexAPI.js")
 app = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -20,6 +22,21 @@ app.use(express.static('/home/davidweisss/iHodLWeb/public/'))
 app.get('/', function (req, res) {
 	console.log("Logging")
 	res.sendFile('/home/davidweisss/iHodLWeb/app/index.html')
+})
+
+app.get('/xbtusd', function (req, res) {
+	(async function main() {
+		console.log("Getting xbtusd quote")
+		try {
+			const result = await makeRequest('GET', 'position', {
+				filter: { symbol: 'XBTUSD' },
+				columns: ['currentQty', 'avgEntryPrice'],
+			});
+			console.log(result);
+		} catch (e) {
+			console.error(e);
+		};
+	}());
 })
 
 app.post('/requestReceipt.html', (req, res) => {

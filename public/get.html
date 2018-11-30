@@ -15,19 +15,26 @@
    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
    crossorigin="anonymous"></script>
 
+  <style type="text/css">
+    .btc { height:1em; width:1em; }
+    </style>
 </head>
 <body>
 
 <h1 class="ui center aligned header">Get started with iHodL</h1>
-<h2 class="ui center aligned header"></h2>
 
-<img src="ihodl.jpg" class="ui large bordered rounded centered image">
 
 <h2 class="ui center aligned header">Follow these simple steps</h2>
 <div class="ui text container">
 	<div class="ui segments">
 		<div class="ui segment">
-			Shipping and payment
+			1) Get quote
+			
+			<img src="ihodl.jpg" class="ui large bordered rounded centered image">
+			<div class="ui center aligned header"> <div id="xbtusd"></div></div>
+		</div>
+		<div class="ui segment">
+			2) Reserve
 			<form class="ui form" 	method="POST" action="/requestReceipt.html">
 				<div class="field">
 					<label>Shipping address</label>
@@ -45,35 +52,48 @@
 			<small>We will use the address provided to write a notification to the blockchain when shipped. After use, all data will be destroyed.</small>
 		</div>
 		<div class="ui segment">
-			1) Buy iHodL: send <b>0.05</b> bitcoin to this address: <br>
-			<b><a target="_blank" href="https://blockstream.info/address/35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP">35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP</a></b>
-			 
+			3) Buy iHodL by transfering the quoted amount to this address: <br>
+	
+<img src="ihodl.png" class="ui small bordered image">		<b><a target="_blank" href="https://blockstream.info/address/35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP">35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP</a></b> (click to monitor)
+<br><b>Of course! This wallet was created with an iHodL!</b> 
+<br>	<small>Once we see it on the blockchain, your order is confirmed.</small>
+			
 		</div>
 		<div class="ui segment">
-			2) Wait for Christmas
+			4) Wait for Christmas
+			<br>			<small>We need to reach 500 pre-orders to produce the first batch to attain this pricing, so please help spread the word to go faster! We can do it quickly if you help too!!</small>
 		</div>
 		<div class="ui segment">
-			3) Take your iHodL to a safe place, without camera or people around
+			5) Take your iHodL to a safe place, without camera or people around (private room or Swiss nuclear bunker vault).
 		</div>
 		<div class="ui segment">
-			4) Connect the device to a power outlet and wait for keys to appear (do not connect to a computer), stay off line.
+			6) Connect the device to a power outlet and wait for keys to appear (do not connect to a computer).
 		</div>
 		<div class="ui segment">
-			5) Hard copy your keys (best way: engrave your keys on metal or write them on a sheet of paper, wood…)
+			7) Make hard copy(ies) of your keys (sheet of paper, metal stamping, stone engraving...)
 		</div>
 		<div class="ui segment">
-			6) Put your private key in a safe place (safe, bank, garden,…)
+			8) Put your private key in a safe place (safe, bank, garden, ...)
 		</div>
 		<div class="ui segment">
-			7) Transfer your bitcoins (from coinbase, Binance,…) with your public key.
+			9) Transfer your bitcoins (from Coinbase, Binance, Ledger, Trezor, etc.) with your public key.
 		</div>
 		<div class="ui segment">
-			8) Repeat this operation (from 4 to 8) as many times as you want new keys. You can erase the keys (that you hard copied) from the screen by disconnecting and connecting again the Ihodl.
+			10) Repeat this operation (from 4 to 8) as many times as you want new keys. You can erase the keys (that you hard copied) from the screen by disconnecting and connecting again the ihodL.
 		</div>
 		<div class="ui segment">
-			To put your Bitcoins again online, use existing private key swiping software.
+			To put your Bitcoins again online, use existing private key swiping software, such as Samurai Wallet that is also self-sovereign.
 		</div>
 	</div>
 </div>
+<!-- Load React. -->
+<!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+     <script crossorigin src='https://unpkg.com/react@16.7.0-alpha.0/umd/react.development.js'></script>
+             <script crossorigin src='https://unpkg.com/react-dom@16.7.0-alpha.0/umd/react-dom.development.js'></script>
+	    <script src='https://cdnjs.cloudflare.com/ajax/libs/babel-core/6.1.19/browser.min.js' crossorigin ></script>
+
+<!-- Load our React component. -->
+<script src="xbtusd.jsx"></script>
+
 </body>
 </html>

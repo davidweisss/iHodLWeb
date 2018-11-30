@@ -10,11 +10,18 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
+		"body-parser": "^1.18.3",
 		"express": "^4.16.4",
 		"fs": "0.0.1-security",
 		"gulp": "^3.9.1",
 		"http": "0.0.0",
 		"https": "^1.0.0",
+		"node-fetch": "^2.3.0",
 		"semantic-ui": "^2.4.2"
+	},
+	"devDependencies": {
+		"@babel/cli": "^7.1.5",
+		"@babel/core": "^7.1.6",
+		"@babel/plugin-transform-react-jsx": "^7.1.6"
 	}
 }
