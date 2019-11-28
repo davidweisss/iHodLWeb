@@ -1,1 +1,180 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Standard Meta -->
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
+		<!-- Site Properties -->
+		<title>FAQ - iHodL</title>
+
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/reset.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/site.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/container.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/grid.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/header.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/image.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/menu.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/divider.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/list.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/segment.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/dropdown.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/icon.css">
+		<link rel="stylesheet" type="text/css" href="/semantic/dist/components/table.css">
+
+		<style type="text/css">
+body {
+	background-color: #FFFFFF;
+}
+  .ui.menu .item img.logo {
+	  margin-right: 1.5em;
+  }
+  .main.container {
+	  margin-top: 7em;
+  }
+  .wireframe {
+	  margin-top: 2em;
+  }
+  .ui.footer.segment {
+	  margin: 5em 0em 0em;
+	  padding: 5em 0em;
+  }
+		</style>
+
+	</head>
+	<body>
+		<div class="ui fixed menu">
+			<div class="ui container">
+				<a href="/" class="header item">
+					<img class="logo" src="Btc-sans.png">
+					iHodL
+				</a>
+				<a href="get.html" class="item">Get</a>
+			</div>
+		</div>
+
+		<div class="ui main text container">
+			<h1 class="ui header">FAQ</h1>
+			<h3 class="ui header">
+				How is it possible to generate keys offline? Do you need to connect your iHodL at a certain moment?
+			</h3> 
+			In theory it's possible to <a href="https://www.swansontec.com/bitcoin-dice.html" target="_blank">generate keys with dice, pencil and paper</a>, but it would be so tedious and error-prone, that in practice we need a computer.
+			iHodL has NO internet connection and generates the keys completely offline.
+			<h3 class="ui header">
+				Is there a chance two iHodLs generate the same key? 
+			</h3> 
+			<p>About as likely as being struck by lightning while taking a crap every year for 17 years in a row (<a href="https://bitcointalk.org/index.php?topic=104461.60" target="blanl">source</a>).</p> 
+			<h3 class="ui header">
+				Is the printed screen permanent?
+			</h3>
+			It is an e-paper display that does not need power to keep displaying an image. It will not change in normal operation so an unplugged device can be used itself as a hard copy. Please note that we have not conducted any stress or long term tests.
+			<img src="https://mcuoneclipse.files.wordpress.com/2017/11/row-of-black-and-white-pixels.png" class="ui centered large bordered rounded image">
+			Microscopic picture of the screen showing small white or black particles that migrate when an electric field is applied, then stay in that arrangement after electricity is removed (<a target="blank" href="https://mcuoneclipse.com/2017/11/04/fascinating-details-of-waveshare-e-paper-displays/">source</a>).
+			<h3 class="ui header"> Should I keep my iHodL in a safe place?
+			</h3>
+			<p>Depending on your environment and use case it may be adviseable to secure your device. iHodL is just a small computer, so if a malicious hacker has physical access, they could tamper with the device and make it unsecure.</p>
+			<h3 class="ui header">
+				What is the best place to keep my private key?
+			</h3>
+			<p>Treat it as you would treat a gold coin with the equivalent bitcoin value: home or bank, cellar, or garden burial. 
+			As opposed to gold, you can make several copies as backup. Any copy of the key is able to redeem the funds.</p>
+			<h3 class="ui header">
+				Does it work for other cryptos?
+			</h3>
+			<p>No. iHodL is designed with security as first priority. Bitcoin is the most secure coin with the highest hash rate and longest up time. Adding features also increases the attack surface.</p>
+			<h3 class="ui header">
+				How come a transfer via my public key can reach my private key that never has been on the blockchain?
+			</h3>
+			<p>The private key is sufficient to know the public key, but it's impossible to guess the private key from the public key. When a transaction is sent to your public key (aka bitcoin address), the bitcoin network checks if it is in the bitcoin address format and just approves it without caring if anyone has the private key. Because you happen to have it, the network will allow you to spend the amount previously sent to that address.</p>
+			<h3 class="ui header">
+				Why is it safer than a secured online wallet, hardware wallet or a physical Bitcoin?
+			</h3>
+			<p>
+			iHodL is a plug and play way to run your own air-gapped headless bitcoin node on a secure Linux installation. Sounds technical, and it is, but all you have to do is plug and wait. It is possible to order an iHodL from us, but you can also build your own, which is even more secure and privacy preserving.
+			<table class="ui celled table padding">
+				<thead>
+					<tr>
+						<th></th>
+						<th>iHodL</th>
+						<th>Online wallet</th>
+						<th>Hardware wallet</th>
+						<th>Physical Bitcoin</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							<h3 class="ui center aligned header">Examples</h3>
+						</td>
+						<td>New</td>
+						<td>Coinbase, BitMex</td>
+						<td>Ledger, Trezor</td>
+						<td>Casascius</td>
+					</tr>
+					<tr>
+						<td>
+							<h3 class="ui center aligned header">Risks of trusting others</h3>
+							<td>Potentially none</td>
+							<td>Exchange hack, freezing of accounts</td>
+							<td>Backdoor, bug in closed-source</td>
+							<td>Issuer could have a copy</td>
+					</tr>
+				</tbody>
+			</table>
+			</p>
+			<h3 class="ui header">
+				Is it easy to use?
+			</h3>
+			<p>Just plug to power each time you want to erase the old key on the screen and obtain a new one.</p>
+			<h3 class="ui header">
+				Can we use it several times ?
+			</h3>
+			<p>As many times as you want.</p>
+			<h3 class="ui header">
+				Is it normal that the keys stay on the screen?
+			</h3>
+			<p>
+			The keys are generated on the device and "printed" on the epaper display, then erased from the computer. If somehow a hacker gets access to the iHodL they would not be able to steal the keys. Please be mindful that this means that when doing a hard copy of the key you need to later erase the key from the display.
+			</p>
+			<p> 
+			<h3 class="ui header">
+				Are Bitcoin withdrawals possible?
+			</h3>
+			<p>Yes. Many wallets allow private key swiping. Samourai Wallet on Android is probably the most secure choice for this. By the way it's a great companion for iHodL to use as a hot wallet for small purchases.
+			<img src="https://pbs.twimg.com/media/DtRq6xuXoAEhinl.jpg" class="ui centered small bordered rounded image">
+			<p>
+			<h3 class="ui header">
+				Are you planning to make Bitcoin withdrawals possible directly fron iHodL?
+			</h3>
+			</h3>
+			Yes. We are planning to add offline signing in the next version. This will allow any transfer plus the development of apps that produce outputs to sign, multisig, marketplaces, e-commerce, etc.  </p>
+		</div>
+
+		<div class="ui inverted vertical footer segment">
+			<div class="ui container">
+				<div class="ui stackable inverted divided equal height stackable grid">
+					<div class="three wide column">
+						<h4 class="ui inverted header">About</h4>
+						<div class="ui inverted link list">
+							<a href="https://twitter.com/davidweisss" target='_blank' class="item">Contact: DM on twitter<br>@davidweisss</a>
+						</div>
+					</div>
+					<div class="three wide column">
+						<h4 class="ui inverted header">Services</h4>
+						<div class="ui inverted link list">
+							<a href="get.html" class="item">Order iHodL</a>
+							<a href="faq.html" class="item">FAQ</a>
+						</div>
+					</div>
+					<div class="seven wide column">
+						<h4 class="ui inverted header">Learn about Bitcoin</h4>
+						<a target='_blank 'href='https://nakamotoinstitute.org/'>Nakamoto Institute</p>
+			<a href='https://nakamotoinstitute.org/bitcoin' target='_blank'>Bitcoin white paper</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+</html>

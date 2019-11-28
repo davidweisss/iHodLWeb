@@ -20,7 +20,7 @@ app.use(express.static('/home/davidweisss/iHodLWeb/public/'))
 
 app.get('/', function (req, res) {
 	console.log("Logging")
-	res.sendFile('/home/davidweisss/iHodLWeb/index.html')
+	res.sendFile('/home/davidweisss/iHodLWeb/public/index.html')
 })
 
 app.get('/xbtusd', function (req, res) {

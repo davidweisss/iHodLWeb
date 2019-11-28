@@ -25,11 +25,12 @@ class XbtUsd extends React.Component {
 			          }
 
 		      return e(
-			            'button',
+			            'div',
 			            { onClick: () => this.setState({ requestedQuote: true }) },
 			            'Request quote'
 			          );
 		    }
-}
+
 const domContainer = document.querySelector('#xbtusd');
 ReactDOM.render(e(XbtUsd), domContainer);
+
