@@ -30,7 +30,7 @@ class XbtUsd extends React.Component {
 			            'Request quote'
 			          );
 		    }
-
+}
 const domContainer = document.querySelector('#xbtusd');
 ReactDOM.render(e(XbtUsd), domContainer);
 
