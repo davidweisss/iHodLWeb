@@ -38,7 +38,12 @@ query {getCampaign(id:"${getQueryVariable('address')}"){
 
 function WhatCampaign(gqlQuery) {
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
-  if (loading) return <p> Loading...</p>;
+  if (loading) return (
+    <Container>
+      <h2> Reading blockchain and campaign info...</h2>
+    </Container>
+
+  )
   if (error){
     return <p>ERROR: {error.message}</p>
   }
@@ -53,15 +58,18 @@ function WhatCampaign(gqlQuery) {
 
   return  (
       <Container>
-      <div>
-	{status === "PENDINGREVIEW" && <h1>Warning: Pending review</h1>}
-	<h2>Fundraising for: {cause}</h2>
-	<h2>By: {who}</h2>
-	<h3>Goal: {goal}</h3>
-	<h3>percent raised: {dataValue}</h3> 
+      <div><br/> <br/>
+	<h2>Bitcoin public address: {id}</h2>
+	<h1><b>{cause}</b>, <br/> <br/> by <i>{who}</i>,<br/> <br/>  is raising {goal} &#8383;</h1>
+	<h3>Has raised {raised} &#8383;</h3> 
       </div>
       <Progress percent={dataValue}/>
-	<h2>Address: {id}</h2>
+	<h3> {dataValue+"%"}</h3> 
+	{status === "SCANNING" && 
+	<h1 style={{color: "Orange"}}>campaign
+	  less than 24h old: scanning
+	  for old transactioms</h1>
+	}
     </Container>
   )
 }

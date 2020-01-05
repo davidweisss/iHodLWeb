@@ -106,7 +106,7 @@ var root = {
     var c = new Campaign(id)
     c.read()
     c.setDetails(input)
-    c.setStatus("PENDINGREVIEW")
+    c.setStatus("SCANNING")
     c.write()
     return
   } 
