@@ -33,6 +33,7 @@ query {getCampaign(id:"${getQueryVariable('address')}"){
   raised
   status
   cause
+  created
 }}
 `;
 
@@ -54,6 +55,12 @@ function WhatCampaign(gqlQuery) {
   const raised = campaign.raised 
   const who = campaign.who
   const cause = campaign.cause
+  const created = campaign.created
+
+  var olderThan24h= created > 1
+  console.log("created", created)
+  console.log("olderThan24h", olderThan24h)
+
   const dataValue = (raised/goal)*100
 
   return  (
@@ -65,10 +72,11 @@ function WhatCampaign(gqlQuery) {
       </div>
       <Progress percent={dataValue}/>
 	<h3> {dataValue+"%"}</h3> 
-	{status === "SCANNING" && 
+	      <h3> {"Created: "+Math.round(10*created)/10+" days ago"}</h3> 
+	{!olderThan24h &&
 	<h1 style={{color: "Orange"}}>campaign
 	  less than 24h old: scanning
-	  for old transactioms</h1>
+	  for old transactions (if any)</h1>
 	}
     </Container>
   )
@@ -80,5 +88,5 @@ const el =
   </ApolloProvider>
 
   ReactDOM.render(
-    el , document.getElementById('progress')
+    el, document.getElementById('progress')
   );	
