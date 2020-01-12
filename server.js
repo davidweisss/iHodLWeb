@@ -1,7 +1,7 @@
 const bitcoinRPCConf = require('./bitcoinRPCConf')
 const Client = require('bitcoin-core')
 const client = new Client(bitcoinRPCConf)
-
+setInterval(() => { console.log("rescanning");client.rescanBlockchain()}, 28800000)
 
 var fs = require('fs')
 var https = require('https')
@@ -9,6 +9,8 @@ var http = require('http');
 var bodyParser = require("body-parser")
 var express = require('express')
 
+// bitmex
+var makeRequest = require("./bitmexAPI.js")
 // ssl
 var key = fs.readFileSync('/etc/letsencrypt/live/ihodl.rocks/privkey.pem');
 var cert = fs.readFileSync('/etc/letsencrypt/live/ihodl.rocks/fullchain.pem')
@@ -31,6 +33,8 @@ var schema = buildSchema(`
 		      who: String
 		      created: String
 		      status: String
+		      ismine: Boolean
+		      iswatchonly: Boolean
 			}
 	type Mutation {
 		      createCampaign(id: String): Campaign
@@ -46,6 +50,18 @@ var schema = buildSchema(`
 var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
 var getAddressBalance = async (addr) => {var utxos = await client.listUnspent(0, 999999999, [addr])
 return(sumListUnspent(utxos))};
+// import address as watch only (don't rescan, this is done periodically
+
+
+var getIsWatchOnly = async (addr) => { const {iswatchonly} = await client.getAddressInfo(addr)
+  return iswatchonly
+}
+var getIsMine= async (addr) => { const {ismine} = await client.getAddressInfo(addr)
+  return ismine
+}
+
+var importAddress = async (addr) => {var ok = await client.importAddress( addr, "",  false)
+return(ok)};
 // db rw
 var dbExists = id => fs.existsSync("public/campaigns/"+id+".json")
 var dbRead = id => JSON.parse(fs.readFileSync("public/campaigns/"+id+".json"))
@@ -63,6 +79,8 @@ class Campaign{
     this.raised= getAddressBalance(id)
     this.created =  dbExists(id) ? this.getCreationDate(id) : null
     this.status = "NEW"
+    this.ismine =  dbExists(id) ? getIsMine(this.id): null
+    this.iswatchonly=  dbExists(id) ? getIsWatchOnly(this.id): null
   }
   // db
   write(){
@@ -71,13 +89,16 @@ class Campaign{
   }
 
   read() {
-    var   campaign = dbRead(this.id)
+    var campaign = dbRead(this.id)
     this.who = campaign.who
     this.goal = campaign.goal
     this.cause = campaign.cause 
     //this.id = campaign.id
     this.status = campaign.status
     this.created = this.getCreationDate(this.id)
+    
+    this.ismine = getIsMine(this.id)
+    this.iswatchonly= getIsWatchOnly(this.id)
   }
 
   setDetails({who, goal, cause}){
@@ -96,21 +117,16 @@ class Campaign{
     return  existsSince
   }
 
-  // getStatus(){
-  // return this.status()
-  // }
-
 }
 
 var root = {
   getCampaign: ({id}) => {
-   var c = new Campaign(id)
+    var c = new Campaign(id)
     c.read()
     return c
-
   },
   createCampaign: ({id}) => {
-   var c = new Campaign(id)
+    var c = new Campaign(id)
     c.write()
     return c
   },
@@ -118,13 +134,13 @@ var root = {
     var c = new Campaign(id)
     c.read()
     c.setDetails(input)
+    importAddress(id)
     c.setStatus("IMPORTED")
     c.write()
     return
   } 
 }
 
-var makeRequest = require("./bitmexAPI.js")
 app = express();
 app.use('/graphql', graphqlHTTP({
   schema: schema,

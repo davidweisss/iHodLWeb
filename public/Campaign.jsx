@@ -33,6 +33,8 @@ query {getCampaign(id:"${getQueryVariable('address')}"){
   raised
   status
   cause
+  ismine
+  iswatchonly
   created
 }}
 `;
@@ -41,6 +43,7 @@ function WhatCampaign(gqlQuery) {
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
   if (loading) return (
     <Container>
+	    <br/> <br/>
       <h2> Reading blockchain and campaign info...</h2>
     </Container>
 
@@ -56,29 +59,31 @@ function WhatCampaign(gqlQuery) {
   const who = campaign.who
   const cause = campaign.cause
   const created = campaign.created
+  const ismine = campaign.ismine
+  const iswatchonly = campaign.iswatchonly
 
   var olderThan24h= created > 1
   console.log("created", created)
   console.log("olderThan24h", olderThan24h)
 
-  const dataValue = (raised/goal)*100
+  const percentProgress = Math.round((raised/goal)*10000)/100
 
   return  (
       <Container>
       <div><br/> <br/>
-	<h2>Bitcoin public address: {id}</h2>
-	<h1><b>{cause}</b>, <br/> <br/> by <i>{who}</i>,<br/> <br/>  is raising {goal} &#8383;</h1>
-	<h3>Has raised {raised} &#8383;</h3> 
+	      <h1><b>Campaign: {cause}</b> <br/> <br/> By: <i>{who}</i><br/> <br/>  Is raising {goal} &#8383;</h1>
       </div>
-      <Progress percent={dataValue}/>
-	<h3> {dataValue+"%"}</h3> 
+      <Progress label={"Raised: "+raised} percent={percentProgress} progress color="blue"/>
 	      <h3> {"Created: "+Math.round(10*created)/10+" days ago"}</h3> 
-	{!olderThan24h &&
-	<h1 style={{color: "Orange"}}>campaign
-	  less than 24h old: scanning
-	  for old transactions (if any)</h1>
-	}
-    </Container>
+	      {!olderThan24h &&
+	      <h1 style={{color: "Orange"}}>campaign
+		      less than 24h old: scanning
+		      for old transactions (if any)</h1>
+	      }
+	      {iswatchonly && <h3 style={{color: "Green"}}>Safe non-custodial campaign (only owner has keys to unlock funds, not stored on this website)</h3>}
+	      {ismine && <h3 style={{color: "Red"}}>Keys to unlock funds are on this website's server and could be hacked</h3>}
+	      <h1 style={{color:"Gray"}} >Bitcoin public address: {id}</h1>
+      </Container>
   )
 }
 
