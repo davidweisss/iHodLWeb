@@ -1,3 +1,4 @@
+var querystring = require('querystring');
 const bitcoinRPCConf = require('./bitcoinRPCConf')
 const Client = require('bitcoin-core')
 const client = new Client(bitcoinRPCConf)
@@ -25,6 +26,12 @@ var schema = buildSchema(`
 		      who: String
 			}
 
+	input CampaignUpdateInput {
+		      cause: String
+		      goal: Float
+		      who: String
+		      signature: String
+			}
 	type Campaign {
 		      id: String
 		      cause: String
@@ -39,6 +46,7 @@ var schema = buildSchema(`
 	type Mutation {
 		      createCampaign(id: String): Campaign
 		      detailsCampaign(id: String, input: CampaignInput): Campaign
+		      updateCampaign(id: String, input: CampaignUpdateInput): Campaign
 		      }
 
 	type Query {
@@ -62,6 +70,7 @@ var getIsMine= async (addr) => { const {ismine} = await client.getAddressInfo(ad
 
 var importAddress = async (addr) => {var ok = await client.importAddress( addr, "",  false)
 return(ok)};
+
 // db rw
 var dbExists = id => fs.existsSync("public/campaigns/"+id+".json")
 var dbRead = id => JSON.parse(fs.readFileSync("public/campaigns/"+id+".json"))
@@ -77,7 +86,7 @@ class Campaign{
     this.who = null
     this.goal = null
     this.raised= getAddressBalance(id)
-    this.created =  dbExists(id) ? this.getCreationDate(id) : null
+    this.created = null
     this.status = "NEW"
     this.ismine =  dbExists(id) ? getIsMine(this.id): null
     this.iswatchonly=  dbExists(id) ? getIsWatchOnly(this.id): null
@@ -95,8 +104,7 @@ class Campaign{
     this.cause = campaign.cause 
     //this.id = campaign.id
     this.status = campaign.status
-    this.created = this.getCreationDate(this.id)
-    
+    this.created = campaign.created
     this.ismine = getIsMine(this.id)
     this.iswatchonly= getIsWatchOnly(this.id)
   }
@@ -110,13 +118,6 @@ class Campaign{
   setStatus(status){
     this.status = status
   }
-
-  getCreationDate(id){
-    var f = fs.statSync(`/home/davidweisss/iHodLWeb/public/campaigns/${id}.json`)
-    var existsSince = ((Date.now()-f.birthtimeMs)/(1000*3600*24))
-    return  existsSince
-  }
-
 }
 
 var root = {
@@ -127,18 +128,38 @@ var root = {
   },
   createCampaign: ({id}) => {
     var c = new Campaign(id)
+    c.created = Date.now()
     c.write()
     return c
   },
   detailsCampaign: ({id, input}) => {
     var c = new Campaign(id)
     c.read()
-    c.setDetails(input)
-    importAddress(id)
-    c.setStatus("IMPORTED")
-    c.write()
-    return
-  } 
+    if(c.status==="NEW"){
+      c.setDetails(input)
+      importAddress(id)
+      c.setStatus("IMPORTED")
+      c.write()
+      return}else{
+	console.log("need signature to update entry.")
+	return
+      }
+  },
+  updateCampaign: async ({id, input}) => {
+    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
+      if(verified){
+	var c = new Campaign(id)
+	c.read()
+	c.setDetails(input)
+	c.write()
+	return c}else{
+	  throw new Error("Bad signature")
+	}
+    }
+    catch(error){
+      throw new Error(error.message)
+    }
+  }
 }
 
 app = express();
@@ -157,65 +178,84 @@ app.get('/', function (req, res) {
 })
 
 app.get('/Campaign', async function (req, res) {
-  var {isvalid} = await client.validateAddress(req.query.address)
-
-  if(isvalid){
-
-      if(!dbExists(req.query.address)) {
-	var query = `mutation {
-	createCampaign(id: "${req.query.address}"){id}}`
-	var {data} = await graphql(schema, query, root)
-	console.log("new campaign created.")
-      }
-
-    var query = `query {
-      getCampaign(id: "${req.query.address}"){status}}`
+  var {address, signature, cause, goal, who} = req.query
+  var {isvalid} = await client.validateAddress(address)
+  if(!isvalid){
+    res.send("<h1>Not a valid bitcoin address</h1>")
+    return
+  }
+  
+  var exists = dbExists(address)
+  if(!exists) {
+    var query = `mutation {
+	createCampaign(id: "${address}"){id}}`
     var {data} = await graphql(schema, query, root)
-    if(data.getCampaign.status==="NEW"){
-      if (Object.keys(req.query).length>1){
-	var query = `mutation {
-      detailsCampaign(id: "${req.query.address}", input: {goal: ${req.query.goal}, who: "${req.query.who}", cause: "${req.query.cause}"}){
+    console.log("new campaign created.")
+    res.redirect(`DetailsCampaign?address=${req.query.address}`)
+    return
+  }
+
+  var has = x => typeof x !== "undefined" && x !== ""
+  var hasInput = has(cause)||has(goal)||has(who)
+  var hasSignature = has(signature)
+
+  var query = `query {
+      getCampaign(id: "${req.query.address}"){status}}`
+  var {data} = await graphql(schema, query, root)
+  var {status} = data.getCampaign
+  
+  if(status==="NEW" & hasInput){
+    var query = `mutation {
+      detailsCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}"}){
 	 id}}`
-	var {data} = await graphql(schema, query, root)
+    var {data} = await graphql(schema, query, root)
+    res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
+    return
+  }
 
-	res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
+  if(status==="NEW" & !hasInput){
+    res.redirect(`DetailsCampaign?address=${address}`)
+    return
+  }
 
-      }
-      else{
-	res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
-      }
+  if(status==="IMPORTED" & hasSignature & hasInput){
+    console.log("updating...")
+    var query = `mutation {
+      updateCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}", signature: "${signature}"}){
+	 id}}`
+    var {data, errors} = await graphql(schema, query, root)
+
+    if(typeof errors !== "undefined" & errors!== null & errors !==""){
+      res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+      return
     }else{
+      res.redirect(`Campaign?address=${address}`)
+      return}
 
-      res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')}
-  }  
+  }
 
+  if(status==="IMPORTED"){
+    res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
+    return
+  }
 
-  else {
-    res.send("<h1>Not a valid bitcoin address</h1>")}
+})
 
+app.get('/DetailsCampaign', function (req, res) {
+  let address = req.query.address
+
+  // add test for existing data file
+  if(typeof address==="undefined"){res.redirect("NewCampaign")}else{
+
+    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
+  }
 })
 
 app.get('/NewCampaign', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/NewCampaign.html')
 })
 
-
 // ihodl
-app.get('/xbtusd', function (req, res) {
-  (async function main() {
-    console.log("Getting xbtusd quote")
-    try {
-      const result = await makeRequest('GET', 'position', {
-	filter: { symbol: 'XBTUSD' },
-	columns: ['currentQty', 'avgEntryPrice'],
-      });
-      console.log(result);
-    } catch (e) {
-      console.error(e);
-    };
-  }());
-})
-
 app.post('/requestReceipt.html', (req, res) => {
   const bitcoinPublicKey= req.body.bitcoinPublicKey
   const shippingAddress= req.body.shippingAddress

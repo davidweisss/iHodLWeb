@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { Progress, Button, Container } from 'semantic-ui-react'
+import { Progress, Button, Container, Message, Divider, Icon, Header } from 'semantic-ui-react'
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
@@ -42,9 +42,10 @@ query {getCampaign(id:"${getQueryVariable('address')}"){
 function WhatCampaign(gqlQuery) {
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
   if (loading) return (
-    <Container>
+    <Container style={{textAlign: "center"}}>
 	    <br/> <br/>
-      <h2> Reading blockchain and campaign info...</h2>
+      <Header as="h2"  icon> <Icon loading color="orange" name="bitcoin"/> Reading blockchain and campaign info...
+      </Header>
     </Container>
 
   )
@@ -62,28 +63,50 @@ function WhatCampaign(gqlQuery) {
   const ismine = campaign.ismine
   const iswatchonly = campaign.iswatchonly
 
-  var olderThan24h= created > 1
-  console.log("created", created)
-  console.log("olderThan24h", olderThan24h)
+  var createdSince = (Date.now()-created)/(1000*3600*24)
+  var olderThan24h= createdSince > 1
+
+//  getCreationDate(id){
+//    var f = fs.statSync(`/home/davidweisss/iHodLWeb/public/campaigns/${id}.json`)
+//    var existsSince = ((Date.now()-f.birthtimeMs)/(1000*3600*24))
+//    return  existsSince
+//  }
+
 
   const percentProgress = Math.round((raised/goal)*10000)/100
+  const causeStyle= {
+    fontSize: '3em', 
+    fontWeight: 'bold', 
+    marginTop: '0.67em',
+    marginBottom: '0.67em'}
 
+  const smallerStyle= {
+    fontSize: '2em', 
+    marginTop: '0.67em',
+    marginBottom: '0.67em'}
   return  (
-      <Container>
-      <div><br/> <br/>
-	      <h1><b>Campaign: {cause}</b> <br/> <br/> By: <i>{who}</i><br/> <br/>  Is raising {goal} &#8383;</h1>
-      </div>
-      <Progress label={"Raised: "+raised} percent={percentProgress} progress color="blue"/>
-	      <h3> {"Created: "+Math.round(10*created)/10+" days ago"}</h3> 
-	      {!olderThan24h &&
-	      <h1 style={{color: "Orange"}}>campaign
-		      less than 24h old: scanning
-		      for old transactions (if any)</h1>
-	      }
-	      {iswatchonly && <h3 style={{color: "Green"}}>Safe non-custodial campaign (only owner has keys to unlock funds, not stored on this website)</h3>}
-	      {ismine && <h3 style={{color: "Red"}}>Keys to unlock funds are on this website's server and could be hacked</h3>}
-	      <h1 style={{color:"Gray"}} >Bitcoin public address: {id}</h1>
-      </Container>
+    <Container>
+      <div style={causeStyle} >{cause}</div>
+      <Progress size="tiny"  percent={percentProgress} color="blue"/>
+      <p><span style={causeStyle}>&#8383;{raised}</span> <span style={smallerStyle}>raised of &#8383;{goal} goal</span></p>
+      <Header size="large" style={{color:"Gray"}} >Donate now <Icon fitted color="orange" name="bitcoin"/> {id}</Header>
+      <Header size="large"><Icon name="user"/> <i>{who}</i> is organizing this fundraiser</Header>
+      <Divider/>
+      <h3> {"Created: "+Math.round(10*createdSince)/10+" days ago"}</h3> 
+      {id.charAt(0)==1 && 
+      <Button href={`DetailsCampaign?address=${id}`} as="a" size="big">
+	<i class="edit icon"></i> 
+	Edit</Button>
+      }
+      {!olderThan24h &&
+	<Message warning>
+	  <Icon loading name="bitcoin"/> Campaign
+	  less than 24h old: scanning
+	  for old transactions (if any)</Message>
+      }
+      {iswatchonly && <Message positive>Safe non-custodial campaign (only owner has keys to unlock funds, not stored on this website)</Message>}
+      {ismine && <Message warning>Keys to unlock funds are on this website's server and could be hacked</Message>}
+    </Container>
   )
 }
 
