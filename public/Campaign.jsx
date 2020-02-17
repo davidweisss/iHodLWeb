@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { Progress, Button, Container, Message, Divider, Icon, Header } from 'semantic-ui-react'
+import { Progress, Button, Container, Message, Divider, Icon, Header, Image } from 'semantic-ui-react'
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
@@ -33,6 +33,7 @@ query {getCampaign(id:"${getQueryVariable('address')}"){
   raised
   status
   cause
+  picture
   ismine
   iswatchonly
   created
@@ -44,7 +45,7 @@ function WhatCampaign(gqlQuery) {
   if (loading) return (
     <Container style={{textAlign: "center"}}>
 	    <br/> <br/>
-      <Header as="h2"  icon> <Icon loading color="orange" name="bitcoin"/> Reading blockchain and campaign info...
+      <Header as="h1"  icon> <Icon loading color="orange" name="bitcoin"/> Reading blockchain and campaign info...
       </Header>
     </Container>
 
@@ -59,19 +60,13 @@ function WhatCampaign(gqlQuery) {
   const raised = campaign.raised 
   const who = campaign.who
   const cause = campaign.cause
+  const picture = campaign.picture
   const created = campaign.created
   const ismine = campaign.ismine
   const iswatchonly = campaign.iswatchonly
 
   var createdSince = (Date.now()-created)/(1000*3600*24)
   var olderThan24h= createdSince > 1
-
-//  getCreationDate(id){
-//    var f = fs.statSync(`/home/davidweisss/iHodLWeb/public/campaigns/${id}.json`)
-//    var existsSince = ((Date.now()-f.birthtimeMs)/(1000*3600*24))
-//    return  existsSince
-//  }
-
 
   const percentProgress = Math.round((raised/goal)*10000)/100
   const causeStyle= {
@@ -86,15 +81,18 @@ function WhatCampaign(gqlQuery) {
     marginBottom: '0.67em'}
   return  (
     <Container>
+      {picture !== null && <Image src={picture} />}
       <div style={causeStyle} >{cause}</div>
       <Progress size="tiny"  percent={percentProgress} color="blue"/>
       <p><span style={causeStyle}>&#8383;{raised}</span> <span style={smallerStyle}>raised of &#8383;{goal} goal</span></p>
-      <Header size="large" style={{color:"Gray"}} >Donate now <Icon fitted color="orange" name="bitcoin"/> {id}</Header>
+      <Button href={`Donate?address=${id}`} primary fluid as="a" size="massive">
+	<i class="bitcoin icon"></i> 
+	Donate Now</Button>
       <Header size="large"><Icon name="user"/> <i>{who}</i> is organizing this fundraiser</Header>
       <Divider/>
       <h3> {"Created: "+Math.round(10*createdSince)/10+" days ago"}</h3> 
       {id.charAt(0)==1 && 
-      <Button href={`DetailsCampaign?address=${id}`} as="a" size="big">
+      <Button href={`DetailsCampaign?address=${id}&goal=${goal}&cause=${cause}&who=${who}`} as="a" size="big">
 	<i class="edit icon"></i> 
 	Edit</Button>
       }
@@ -106,6 +104,7 @@ function WhatCampaign(gqlQuery) {
       }
       {iswatchonly && <Message positive>Safe non-custodial campaign (only owner has keys to unlock funds, not stored on this website)</Message>}
       {ismine && <Message warning>Keys to unlock funds are on this website's server and could be hacked</Message>}
+      <Header size="small" style={{color:"Gray"}} >Campaign address <Icon fitted color="orange" name="bitcoin"/>{id}</Header>
     </Container>
   )
 }

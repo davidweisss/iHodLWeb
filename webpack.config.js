@@ -5,6 +5,7 @@ module.exports = {
   entry: {
     Campaign: "./public/Campaign.jsx",
     NewCampaign: "./public/NewCampaign.jsx",
+    Donate: "./public/Donate.jsx",
     DetailsCampaign: "./public/DetailsCampaign.jsx"},
   mode: "production",
   module: {
