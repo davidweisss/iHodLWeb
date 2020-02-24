@@ -53,18 +53,7 @@ function WhatCampaign(gqlQuery) {
   if (error){
     return <p>ERROR: {error.message}</p>
   }
-  var campaign = data.getCampaign
-  const id= campaign.id
-  const status= campaign.status
-  const goal = campaign.goal
-  const raised = campaign.raised 
-  const who = campaign.who
-  const cause = campaign.cause
-  const picture = campaign.picture
-  const created = campaign.created
-  const ismine = campaign.ismine
-  const iswatchonly = campaign.iswatchonly
-
+  const { id, status, goal, raised, who, cause, picture, created, ismine, iswatchonly} = data.getCampaign
   var createdSince = (Date.now()-created)/(1000*3600*24)
   var olderThan24h= createdSince > 1
 
@@ -88,6 +77,9 @@ function WhatCampaign(gqlQuery) {
       <Button href={`Donate?address=${id}`} primary fluid as="a" size="massive">
 	<i class="bitcoin icon"></i> 
 	Donate Now</Button>
+      <br/>
+      <Button href={`Share?address=${id}&cause=${cause}`} basic color="pink" fluid as="a" size="massive">
+	Share</Button>
       <Header size="large"><Icon name="user"/> <i>{who}</i> is organizing this fundraiser</Header>
       <Divider/>
       <h3> {"Created: "+Math.round(10*createdSince)/10+" days ago"}</h3> 

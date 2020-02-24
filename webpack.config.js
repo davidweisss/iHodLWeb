@@ -6,6 +6,7 @@ module.exports = {
     Campaign: "./public/Campaign.jsx",
     NewCampaign: "./public/NewCampaign.jsx",
     Donate: "./public/Donate.jsx",
+    Share: "./public/Share.jsx",
     DetailsCampaign: "./public/DetailsCampaign.jsx"},
   mode: "production",
   module: {

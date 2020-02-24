@@ -324,6 +324,9 @@ app.get('/NewCampaign', function (req, res) {
 app.get('/Donate', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/Donate.html')
 })
+app.get('/Share', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Share.html')
+})
 // ihodl
 app.post('/requestReceipt.html', (req, res) => {
   const bitcoinPublicKey= req.body.bitcoinPublicKey
