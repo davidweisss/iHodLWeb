@@ -15,7 +15,7 @@ var toHexString = byteArray => {
 var balance = query => {
   const electrumx = spawnSync('electrumx_rpc', ['query', query]);
   const d = `${electrumx.output}`
-  const b = d.split("Balance: ")[1].split(" BTC")[0]
+  const b = d.split("Balance: ")[1].split(" BTC")[0].replace(',','')
   return(b)
 }
 

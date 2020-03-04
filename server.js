@@ -1,3 +1,4 @@
+const {electrumxBalance} = require('./electrumxBalance')
 const fileUpload = require('express-fileupload');
 var fuseJs = require("fuse.js")
 var querystring = require('querystring');
@@ -15,8 +16,8 @@ var express = require('express')
 // bitmex
 var makeRequest = require("./bitmexAPI.js")
 // ssl
-var key = fs.readFileSync('/etc/letsencrypt/live/ihodl.rocks/privkey.pem');
-var cert = fs.readFileSync('/etc/letsencrypt/live/ihodl.rocks/fullchain.pem')
+var key = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/privkey.pem');
+var cert = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/fullchain.pem')
 
 // graphql
 var graphqlHTTP = require('express-graphql');
@@ -30,6 +31,9 @@ var schema = buildSchema(`
 		      picture: String
 			}
 
+	input CampaignRemoveInput {
+		      signature: String
+			}
 	input CampaignUpdateInput {
 		      cause: String
 		      goal: Float
@@ -53,6 +57,7 @@ var schema = buildSchema(`
 		      createCampaign(id: String): Campaign
 		      detailsCampaign(id: String, input: CampaignInput): Campaign
 		      updateCampaign(id: String, input: CampaignUpdateInput): Campaign
+		      removeCampaign(id: String, input: CampaignRemoveInput): Campaign
 		      }
 
 	type Query {
@@ -62,9 +67,10 @@ var schema = buildSchema(`
 	`);
 
 // util to compute unspent outputs for an address
-var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
-var getAddressBalance = async (addr) => {var utxos = await client.listUnspent(0, 999999999, [addr])
-return(sumListUnspent(utxos))};
+// using electrumx instead
+// var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
+// var getAddressBalance = async (addr) => {var utxos = await client.listUnspent(0, 999999999, [addr])
+// return(sumListUnspent(utxos))};
 // import address as watch only (don't rescan, this is done periodically
 
 
@@ -82,6 +88,13 @@ return(ok)};
 var dbExists = id => fs.existsSync("public/campaigns/"+id+".json")
 var dbRead = id => JSON.parse(fs.readFileSync("public/campaigns/"+id+".json"))
 var dbWrite = campaign  => fs.writeFileSync("public/campaigns/"+campaign.id+".json",JSON.stringify(campaign, null, 2))
+
+var dbRemove = (id, picture) => {
+  if(dbExists(id)){
+  fs.unlinkSync("public/campaigns/"+id+".json")}
+  if(picture!=="undefined"){
+  fs.unlinkSync("public/pictures/"+picture)}
+}
 
 var dbIDs = ids => {
  var ids = fs.readdirSync("/home/davidweisss/iHodLWeb/public/campaigns")
@@ -110,10 +123,10 @@ class Campaign{
   }
 
   readAsync() {
-    this.raised=  getAddressBalance(this.id)
     this.ismine = getIsMine(this.id)
     this.iswatchonly= getIsWatchOnly(this.id)
   }
+
   read() {
     var campaign = dbRead(this.id)
     this.who = campaign.who
@@ -122,14 +135,18 @@ class Campaign{
     this.picture = campaign.picture
     this.status = campaign.status
     this.created = campaign.created
+    this.raised = electrumxBalance(this.id)
   }
 
   setDetails({who, goal, cause, picture}){
-    var tmpPicture= picture
-    picture = picture.split("tmp-")[1]
-    var picturePath = "/home/davidweisss/iHodLWeb/public/pictures/"
-    fs.renameSync(picturePath+tmpPicture, picturePath+picture)
-    console.log(tmpPicture, picture, picturePath)
+    // picture is passed as string "undefined" when absent!
+    if(picture !== "undefined"){
+      var tmpPicture= picture
+      picture = picture.split("tmp-")[1]
+      var picturePath = "/home/davidweisss/iHodLWeb/public/pictures/"
+      fs.renameSync(picturePath+tmpPicture, picturePath+picture)
+      console.log(tmpPicture, picture, picturePath)
+    }
     this.who = who
     this.goal = goal
     this.cause = cause
@@ -157,7 +174,9 @@ var root = {
   detailsCampaign: ({id, input}) => {
     var c = new Campaign(id)
     c.read()
+    console.log(c)
     if(c.status==="NEW"){
+      console.log("adding details")
       c.setDetails(input)
       importAddress(id)
       c.setStatus("IMPORTED")
@@ -169,13 +188,26 @@ var root = {
   },
   updateCampaign: async ({id, input}) => {
     try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      console.log("in updateCampaign", input.signature)
       if(verified){
 	var c = new Campaign(id)
 	c.read()
 	c.setDetails(input)
 	c.write()
 	return c}else{
+	  throw new Error("Bad signature")
+	}
+    }
+    catch(error){
+      throw new Error(error.message)
+    }
+  },
+  removeCampaign: async ({id, input}) => {
+    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
+      if(verified){
+	var c = new Campaign(id)
+	c.read()
+	dbRemove(id, c.picture)	
+	return id}else{
 	  throw new Error("Bad signature")
 	}
     }
@@ -225,7 +257,7 @@ app.use(express.static('/home/davidweisss/iHodLWeb/public/pictures/'))
 //////////////////////////////////////////////
 
 app.get('/', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/index.html')
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewCampaign.html')
 })
 
 app.post('/Campaign', (req, res) => {
@@ -238,8 +270,26 @@ app.post('/Campaign', (req, res) => {
 
   var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
   req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
-)
+  )
   res.redirect(`DetailsCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
+}
+)
+
+
+
+app.get('/RemoveCampaign', async function (req, res)  {
+  var {address, signature} = req.query
+  var query = `mutation {
+      removeCampaign(id: "${address}", input: {signature: "${signature}"}){
+	 id}}`
+  var {data, errors} = await graphql(schema, query, root)
+
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+    return
+  }else{
+    res.redirect(`NewCampaign`)
+    return}
 }
 )
 
@@ -273,7 +323,8 @@ app.get('/Campaign', async function (req, res) {
   if(status==="NEW" & hasInput){
     var query = `mutation {
       detailsCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}", picture: "${picture}"}){
-	 id}}`
+	 id}
+       }`
     var {data} = await graphql(schema, query, root)
     res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
     return
@@ -285,8 +336,6 @@ app.get('/Campaign', async function (req, res) {
   }
 
   if(status==="IMPORTED" & hasSignature & hasInput){
-    console.log("updating...")
-    console.log("b4 updateCampaign", signature)
     var query = `mutation {
       updateCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}", picture: "${picture}", signature: "${signature}"}){
 	 id}}`

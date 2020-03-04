@@ -18,7 +18,7 @@ const el =
     <Header as="h1" style={{textAlign: "center"}}>Share campaign
     <br/>
       <TwitterShareButton
-	url={"https://iHodL.rocks/Campaign?address="+address}
+	url={"https://bitfundme.rocks/Campaign?address="+address}
 	title={"Donate to: "+cause}>
 	<TwitterIcon size={64} round />
       </TwitterShareButton>

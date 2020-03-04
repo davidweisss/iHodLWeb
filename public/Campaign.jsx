@@ -13,8 +13,6 @@ const client = new ApolloClient({
   link:link
 });
 
-
-
 function getQueryVariable(variable)
 {
          var query = window.location.search.substring(1);
@@ -70,7 +68,8 @@ function WhatCampaign(gqlQuery) {
     marginBottom: '0.67em'}
   return  (
     <Container>
-      {picture !== null && <Image src={picture} />}
+      {/* picture is undefined String when absent!*/}
+      {picture !== "undefined" && <Image src={picture} />}
       <div style={causeStyle} >{cause}</div>
       <Progress size="tiny"  percent={percentProgress} color="blue"/>
       <p><span style={causeStyle}>&#8383;{raised}</span> <span style={smallerStyle}>raised of &#8383;{goal} goal</span></p>
@@ -87,12 +86,6 @@ function WhatCampaign(gqlQuery) {
       <Button href={`DetailsCampaign?address=${id}&goal=${goal}&cause=${cause}&who=${who}`} as="a" size="big">
 	<i class="edit icon"></i> 
 	Edit</Button>
-      }
-      {!olderThan24h &&
-	<Message warning>
-	  <Icon loading name="bitcoin"/> Campaign
-	  less than 24h old: scanning
-	  for old transactions (if any)</Message>
       }
       {iswatchonly && <Message positive>Safe non-custodial campaign (only owner has keys to unlock funds, not stored on this website)</Message>}
       {ismine && <Message warning>Keys to unlock funds are on this website's server and could be hacked</Message>}

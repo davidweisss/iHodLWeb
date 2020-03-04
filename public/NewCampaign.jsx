@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { Form, Button, Container, Grid, Image, Header, Icon } from 'semantic-ui-react'
+import { Form, Button, Container, Grid, Image, Header, Icon, Progress } from 'semantic-ui-react'
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
@@ -9,13 +9,13 @@ import QRCode from 'qrcode.react'
 
 function getQueryVariable(variable)
 {
-         var query = window.location.search.substring(1);
-         var vars = query.split("&");
-         for (var i=0;i<vars.length;i++) {
-	                  var pair = vars[i].split("=");
-	                  if(pair[0] == variable){return pair[1];}
-	          }
-         return(false);
+  var query = window.location.search.substring(1);
+  var vars = query.split("&");
+  for (var i=0;i<vars.length;i++) {
+    var pair = vars[i].split("=");
+    if(pair[0] == variable){return pair[1];}
+  }
+  return(false);
 }
 
 const link = createHttpLink({ uri: "http://localhost/graphql",
@@ -35,6 +35,7 @@ query {getCampaigns(searchTerm:"${searchTerm}"){
   cause
   created
   picture
+  raised
 }}
 `;
 
@@ -46,8 +47,8 @@ function WhatCampaigns(gqlQuery) {
       <Header as="h1"  icon> <Icon loading color="orange" name="bitcoin"/>  Getting campaigns...
       </Header>
     </Container>
-
   )
+
   if (error){
     return <p>ERROR: {error.message}</p>
   }
@@ -55,13 +56,15 @@ function WhatCampaigns(gqlQuery) {
   var d = data.getCampaigns
 
   var cs =  d.map(x =>
-    <Grid.Column as="a" href={"https://iHodL.rocks/Campaign?address="+x.id}>
+    <Grid.Column as="a" href={"https://bitfundme.rocks/Campaign?address="+x.id}>
       <Header as="h2"> {x.cause} </Header>
       <Header as="h3"> {x.who} </Header>
       {x.picture !== null ? 
 	<Image src={x.picture} />
 	: 
 	<QRCode value={x.id} size="100"/>}
+      <Progress size="medium" percent={Math.round((x.raised/x.goal)*10000)/100} color="blue"/>
+      Raised &#8383;{x.raised}
     </Grid.Column>
   )
 
@@ -77,6 +80,8 @@ function WhatCampaigns(gqlQuery) {
 }
 const el = 
   <Container>
+    <br/>
+    <br/>
     <Container>
       <h1>Search Campaign or Create New Campaign</h1>
       <Form action="Campaign">
@@ -88,6 +93,9 @@ const el =
       </Form>
     </Container>
     <ApolloProvider client={client}>
+      <br/>
+      <br/>
+      <br/>
       <br/>
       <br/>
       <WhatCampaigns gqlQuery={WHAT_CAMPAIGNS}/>
