@@ -33,6 +33,7 @@ const redeemTx= (client, addr, destAddr, tipAddr, tipPercent, feeRate, txMessage
 
 	  let rawtx = client.createRawTransaction(input, output, 0, true)
 	  let psbt = client.createPsbt(input, output, 0, true)
+	  console.log(psbt)
 	  return Promise.all([rawtx, psbt])
 	})
   )

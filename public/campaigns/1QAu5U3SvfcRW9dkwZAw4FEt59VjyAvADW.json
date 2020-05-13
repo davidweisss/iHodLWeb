@@ -1,0 +1,20 @@
+{
+  "id": "1QAu5U3SvfcRW9dkwZAw4FEt59VjyAvADW",
+  "cause": "Test2",
+  "description": "# This is why!",
+  "who": "BitFundMe",
+  "goal": 0.11,
+  "picture": "1QAu5U3SvfcRW9dkwZAw4FEt59VjyAvADW.jpeg",
+  "newsItems": [
+    {
+      "created": "1588938969105",
+      "message": "Hsbbjssjj"
+    }
+  ],
+  "created": 1588938902347,
+  "status": "IMPORTED",
+  "raised": "0",
+  "fundingStatus": null,
+  "ismine": {},
+  "iswatchonly": {}
+}

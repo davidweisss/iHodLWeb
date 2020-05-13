@@ -19,10 +19,7 @@ var urlParams = new URLSearchParams(window.location.search);
 const DETAILS_CAMPAIGN = gql`
 query {getCampaign(id:"${urlParams.get('address')}"){
   status
-  goal
-  description
-  who
-  cause
+  picture
 }}
 `
 function DetailsCampaign(gqlQuery)
@@ -37,10 +34,15 @@ function DetailsCampaign(gqlQuery)
   if (error){
     return <p>ERROR: {error.message}</p>
   }
-  const {status, goal, description, who, cause} = data.getCampaign
+  let {picture, status} = data.getCampaign
   const message = urlParams.get('message')
-  const picture = urlParams.get('picture')
-  const setOrUpdate= status === "NEW" ? "SetDetails": "UpdateDetails"
+  console.log(picture)
+  const setOrUpdate= status === "NEW" ? "SetMedia": "UpdateMedia"
+
+  if(urlParams.get('picture') !== null){  picture = urlParams.get('picture')}
+
+  console.log(urlParams.get('picture'))
+  console.log(picture)
   return(
     <Container>
       {message !== null &&
@@ -52,7 +54,7 @@ function DetailsCampaign(gqlQuery)
 	<h1>Enter Campaign Details</h1>
 
 	<Step.Group>
-	  <Step as='a' href={'MediaCampaign?address='+urlParams.get('address')} >
+	  <Step as='a' href={'MediaCampaign?address='+urlParams.get('address')} active>
 	    <Icon name='picture' />
 	    <Step.Content>
 	      <Step.Title>Media</Step.Title>
@@ -60,7 +62,7 @@ function DetailsCampaign(gqlQuery)
 	    </Step.Content>
 	  </Step>
 
-	  <Step as='a' href={'DetailsCampaign?address='+urlParams.get('address')} active>
+	  <Step as='a' href={'DetailsCampaign?address='+urlParams.get('address')} >
 	    <Icon name='info' />
 	    <Step.Content>
 	      <Step.Title>Info</Step.Title>
@@ -69,24 +71,29 @@ function DetailsCampaign(gqlQuery)
 	  </Step>
 	</Step.Group>
 
+	{/* Upload picture */}
+	<Form id="picture" action="MediaCampaign" method="POST" enctype="multipart/form-data">
+	  <Form.Field as="h2">
+	    <label>Picture</label>
+	    <input type="file" name="picture"  accept="image/*"/>
+	  </Form.Field>
+	  <Form.Field>
+	    <input type="hidden" name="address" value={urlParams.get('address')}/>
+	  </Form.Field>
+	  <Button size="big" type='submit'>
+	    <i class="upload icon"></i>
+	    Upload</Button>
+	</Form>
+	<br/>
+	{picture !== null && <Image src={picture}/>}
+
 	{/* Enter details */}
 	<Form id="details" action={setOrUpdate}>
-	  <Form.Field as="h2">
-	    <label>Cause</label>
-	    <input name="cause" defaultValue={cause || null} placeholder='What the funds are for' />
-	  </Form.Field>
-	  <Form.Field as="h2">
-	    <label>Who</label>
-	    <input name="who" defaultValue={who || null} placeholder='Anon ok' />
-	  </Form.Field>
-	  <Form.Field as="h2">
-	    <label>Goal</label>
-	    <input pattern="^(?=.+)(?:[1-9]\d*|0)?(?:\.\d+)?$" required name="goal" defaultValue={goal || null} placeholder='Amount in BTC' />
-	  </Form.Field>
-	  <Form.Field as="h2">
-	    <label>Description</label>
-	    <TextArea name="description" defaultValue={description || null} placeholder='More details about fundraiser' />
-	  </Form.Field>
+	  {/* Submit pictures with other details*/}
+	  {picture !== null &&
+	    <Form.Field>
+	      <input type="hidden" name="picture" value={picture}/>
+	    </Form.Field>}
 	  {status === "IMPORTED" &&
 	    <Form.Field as="h2">
 	      <label>Signature (sign this message: "challenge")</label>
@@ -112,5 +119,5 @@ const el =
   </ApolloProvider>
 
   ReactDOM.render(
-    el, document.getElementById('DetailsCampaign')
+    el, document.getElementById('MediaCampaign')
   );	

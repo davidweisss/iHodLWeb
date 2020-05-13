@@ -4,9 +4,16 @@ const webpack = require("webpack");
 module.exports = {
   entry: {
     Campaign: "./public/Campaign.jsx",
-    NewCampaign: "./public/NewCampaign.jsx",
+    Campaign2: "./public/Campaign2.jsx",
+    Search: "./public/Search.jsx",
+    NewAddress: "./public/NewAddress.jsx",
     Donate: "./public/Donate.jsx",
     Share: "./public/Share.jsx",
+    RedeemCampaign: "./public/RedeemCampaign.jsx",
+    SignRedeemCampaign: "./public/SignRedeemCampaign.jsx",
+    NewsItem: "./public/NewsItem.jsx",
+    MediaCampaign: "./public/MediaCampaign.jsx",
+    SignRemoveCampaign: "./public/SignRemoveCampaign.jsx",
     DetailsCampaign: "./public/DetailsCampaign.jsx"},
   mode: "production",
   module: {

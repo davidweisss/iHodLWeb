@@ -1,20 +1,16 @@
-const {electrumxBalance} = require('./electrumxBalance')
+var tipAddr= "1Q4PrJKGC9tYPgrtf3tjqELu8UmTHJJCMQ"
+const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./public/db.js')
+const {getFeeRate, redeemTx} = require('./redeem.js')
 const fileUpload = require('express-fileupload');
-var fuseJs = require("fuse.js")
 var querystring = require('querystring');
-const bitcoinRPCConf = require('./bitcoinRPCConf')
-const Client = require('bitcoin-core')
-const client = new Client(bitcoinRPCConf)
-setInterval(() => { console.log("rescanning");client.rescanBlockchain()}, 28800000)
-
 var fs = require('fs')
 var https = require('https')
 var http = require('http');
 var bodyParser = require("body-parser")
 var express = require('express')
+const { root, client } = require('./public/resolvers.js')
+setInterval(() => { console.log("rescanning");client.rescanBlockchain(); return}, 28800000)
 
-// bitmex
-var makeRequest = require("./bitmexAPI.js")
 // ssl
 var key = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/privkey.pem');
 var cert = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/fullchain.pem')
@@ -23,231 +19,22 @@ var cert = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/fullchain.pem'
 var graphqlHTTP = require('express-graphql');
 var { buildSchema, graphql } = require('graphql');
 
-var schema = buildSchema(`
-	input CampaignInput {
-		      cause: String
-		      goal: Float
-		      who: String
-		      picture: String
-			}
+var schemaString = fs.readFileSync('./public/bitfundme.graphql').toString()
+var schema = buildSchema(schemaString);
 
-	input CampaignRemoveInput {
-		      signature: String
-			}
-	input CampaignUpdateInput {
-		      cause: String
-		      goal: Float
-		      who: String
-		      picture: String
-		      signature: String
-			}
-	type Campaign {
-		      id: String
-		      cause: String
-		      goal: Float
-		      who: String
-		      picture: String
-		      created: String
-		      status: String
-		      raised: String
-		      ismine: Boolean
-		      iswatchonly: Boolean
-			}
-	type Mutation {
-		      createCampaign(id: String): Campaign
-		      detailsCampaign(id: String, input: CampaignInput): Campaign
-		      updateCampaign(id: String, input: CampaignUpdateInput): Campaign
-		      removeCampaign(id: String, input: CampaignRemoveInput): Campaign
-		      }
-
-	type Query {
-		      getCampaign(id: String): Campaign 
-		      getCampaigns(searchTerm: String): [Campaign] 
-		    }
-	`);
-
-// util to compute unspent outputs for an address
-// using electrumx instead
-// var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
-// var getAddressBalance = async (addr) => {var utxos = await client.listUnspent(0, 999999999, [addr])
-// return(sumListUnspent(utxos))};
-// import address as watch only (don't rescan, this is done periodically
-
-
-var getIsWatchOnly = async (addr) => { const {iswatchonly} = await client.getAddressInfo(addr)
-  return iswatchonly
-}
-var getIsMine= async (addr) => { const {ismine} = await client.getAddressInfo(addr)
-  return ismine
-}
-
-var importAddress = async (addr) => {var ok = await client.importAddress( addr, "",  false)
-return(ok)};
-
-// db rw
-var dbExists = id => fs.existsSync("public/campaigns/"+id+".json")
-var dbRead = id => JSON.parse(fs.readFileSync("public/campaigns/"+id+".json"))
-var dbWrite = campaign  => fs.writeFileSync("public/campaigns/"+campaign.id+".json",JSON.stringify(campaign, null, 2))
-
-var dbRemove = (id, picture) => {
-  if(dbExists(id)){
-  fs.unlinkSync("public/campaigns/"+id+".json")}
-  if(picture!=="undefined"){
-  fs.unlinkSync("public/pictures/"+picture)}
-}
-
-var dbIDs = ids => {
- var ids = fs.readdirSync("/home/davidweisss/iHodLWeb/public/campaigns")
-  ids=  ids.map(x => x.split(".")).map(x=>x[0])
-  return(ids)
-}
-// if (fs.existsSync("public/campaigns/"+id+".json")){
-var dbExists = id => fs.existsSync("public/campaigns/"+id+".json")
-
-class Campaign{
-  constructor(id) {
-    this.id = id 
-    this.cause = null
-    this.who = null
-    this.goal = null
-    this.picture = null
-    this.created = null
-    this.status = "NEW"
-    this.raised= null
-    this.ismine =  dbExists(id) ? getIsMine(this.id): null
-    this.iswatchonly=  dbExists(id) ? getIsWatchOnly(this.id): null
-  }
-  write(){
-    dbWrite(this)
-    return this
-  }
-
-  readAsync() {
-    this.ismine = getIsMine(this.id)
-    this.iswatchonly= getIsWatchOnly(this.id)
-  }
-
-  read() {
-    var campaign = dbRead(this.id)
-    this.who = campaign.who
-    this.goal = campaign.goal
-    this.cause = campaign.cause 
-    this.picture = campaign.picture
-    this.status = campaign.status
-    this.created = campaign.created
-    this.raised = electrumxBalance(this.id)
-  }
-
-  setDetails({who, goal, cause, picture}){
-    // picture is passed as string "undefined" when absent!
-    if(picture !== "undefined"){
-      var tmpPicture= picture
-      picture = picture.split("tmp-")[1]
-      var picturePath = "/home/davidweisss/iHodLWeb/public/pictures/"
-      fs.renameSync(picturePath+tmpPicture, picturePath+picture)
-      console.log(tmpPicture, picture, picturePath)
-    }
-    this.who = who
-    this.goal = goal
-    this.cause = cause
-    this.picture = picture 
-  }
-
-  setStatus(status){
-    this.status = status
-  }
-}
-
-var root = {
-  getCampaign: ({id}) => {
-    var c = new Campaign(id)
-    c.read()
-    c.readAsync()
-    return c
-  },
-  createCampaign: ({id}) => {
-    var c = new Campaign(id)
-    c.created = Date.now()
-    c.write()
-    return c
-  },
-  detailsCampaign: ({id, input}) => {
-    var c = new Campaign(id)
-    c.read()
-    console.log(c)
-    if(c.status==="NEW"){
-      console.log("adding details")
-      c.setDetails(input)
-      importAddress(id)
-      c.setStatus("IMPORTED")
-      c.write()
-      return}else{
-	console.log("need signature to update entry.")
-	return
-      }
-  },
-  updateCampaign: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	c.setDetails(input)
-	c.write()
-	return c}else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
-  },
-  removeCampaign: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	dbRemove(id, c.picture)	
-	return id}else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
-  },
-  getCampaigns: ({searchTerm}) =>  { 
-    var ids = dbIDs()
-    var campaigns = ids.map(id =>{
-      var c = new Campaign(id)
-      c.read()
-      return c
-    })
-    var searchOptions = {
-      shouldSort: true,
-      threshold: 0.6,
-      location: 0,
-      distance: 100,
-      maxPatternLength: 32,
-      minMatchCharLength: 1,
-      keys: [
-	"who",
-	"cause"
-      ]
-    }
-    var fuse = new fuseJs(campaigns, searchOptions); // "list" is the item array
-    return fuse.search(searchTerm)
-  }
-}
-
+// app and middlewares
 app = express();
-app.use(fileUpload())
+
 app.use('/graphql', graphqlHTTP({
   schema: schema,
   rootValue: root,
   graphiql: true,
 }));
+
+app.use(fileUpload())
 app.use(bodyParser.urlencoded({extended: true}));
 
+// serve static files 
 app.use(express.static('/home/davidweisss/iHodLWeb/public/'))
 app.use(express.static('/home/davidweisss/iHodLWeb/public/campaigns/'))
 app.use(express.static('/home/davidweisss/iHodLWeb/public/pictures/'))
@@ -255,11 +42,211 @@ app.use(express.static('/home/davidweisss/iHodLWeb/public/pictures/'))
 //////////////////////////////////////////////
 // Routes
 //////////////////////////////////////////////
-
-app.get('/', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/NewCampaign.html')
+app.get('/gatsby', (req, res)=> {
+  res.sendFile('/home/davidweisss/bitfundme/public/home.html')
 })
 
+
+app.get('/', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/home.html')
+})
+
+
+app.get('/NewAddress', function(req, res){
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewAddress.html')
+})
+
+app.get('/ValidateAddress', async function(req, res){
+  // 
+  const { address } = req.query
+
+  let exists = dbExists(address)
+  if(exists){
+    res.redirect(`NewAddress?message=Address previously added`)
+    return
+  }
+
+  let {isvalid} = await client.validateAddress(address)
+  if(!isvalid){
+    res.redirect('NewAddress?message=Invalid Address')
+    return
+  }else{
+    res.redirect(`ImportAddress?address=${address}`)
+    return
+  }
+}
+)
+
+app.get('/ImportAddress', async function(req, res){
+  let address = req.query.address
+  let query = `mutation {
+	createCampaign(id: "${address}"){id}}`
+  let {data} = await graphql(schema, query, root)
+  console.log("new campaign created.")
+  res.redirect(`MediaCampaign?address=${address}`)
+  return
+})
+
+
+app.get('/DetailsCampaign', function (req, res) {
+  let address = req.query.address
+
+  // add test for existing data file
+  if(typeof address==="undefined"){res.redirect("NewAddress")}else{
+
+    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
+  }
+})
+
+app.get('/SetDetails', async function(req, res){
+
+  var {
+    address, 
+    cause, 
+    goal, 
+    who, 
+    description,
+    picture
+  } = req.query
+  var query = `mutation {
+      detailsCampaign(
+      id: "${address}", 
+      input: {
+       goal: ${goal}, 
+       who: "${who}", 
+       cause: "${cause}", 
+       description: "${description}", 
+       picture: "${picture}"}){
+	 id}
+       }`
+  var {data} = await graphql(schema, query, root)
+  res.redirect(`Campaign2?address=${address}`)
+  return
+})
+
+
+app.get('/UpdateDetails', async function(req, res){
+
+  var {
+    address,
+    cause,
+    goal,
+    who,
+    description,
+    picture,
+    signature
+  } = req.query
+
+  var query = `mutation {
+      updateCampaign(id: "${address}", 
+      input: {goal: ${goal},
+      who: "${who}",
+      cause: "${cause}",
+      description: "${description}", 
+      picture: "${picture}",
+      signature: "${signature}"}){
+	 id}}`
+  var {data, errors} = await graphql(schema, query, root)
+
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+    return
+  }else{
+    res.redirect(`Campaign2?address=${address}`)
+    return}
+})
+
+app.get('/PopNewsItem', async function(req, res){
+
+  var {
+    address,
+    newsItem,
+    signature
+  } = req.query
+  console.log(req.query)
+  var query = `mutation {
+      popNewsItem(id: "${address}", 
+      input: {     
+       newsItem: "${newsItem}", 
+       signature: "${signature}"}){
+	 id}}`
+  console.log(query)
+  var {data, errors} = await graphql(schema, query, root)
+
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`NewsItem?${querystring.stringify({address: address, message: errors[0].message})}`)
+    return
+  }else{
+    res.redirect(`Campaign2?address=${address}`)
+    return}
+})
+
+app.post('/MediaCampaign', (req, res) => {
+  var address = req.body.address
+
+  if (req.files === null){
+    res.redirect(`MediaCampaign?${querystring.stringify({address: address, message: "No file chosen"})}`)
+    return
+  }
+
+  var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
+  req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
+  )
+  res.redirect(`MediaCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
+}
+)
+
+app.get('/SetMedia', async function(req, res){
+
+  var {
+    address, 
+    picture
+  } = req.query
+  var query = `mutation {
+      setMedia(
+      id: "${address}", 
+      input: {
+       picture: "${picture}"}){
+	 id}
+       }`
+  var {data} = await graphql(schema, query, root)
+  res.redirect(`DetailsCampaign?address=${address}`)
+  return
+})
+
+
+app.get('/UpdateMedia', async function(req, res){
+
+  var {
+    address,
+    picture,
+    signature
+  } = req.query
+
+  var query = `mutation {
+      updateMedia(id: "${address}", 
+      input: {
+      picture: "${picture}",
+      signature: "${signature}"}){
+	 id}}`
+  var {data, errors} = await graphql(schema, query, root)
+
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`MediaCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+    return
+  }else{
+    res.redirect(`DetailsCampaign?address=${address}`)
+    return}
+})
+
+app.get('/MediaCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
+})
+
+app.get('/NewsItem', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
+}
+)
 app.post('/Campaign', (req, res) => {
   var address = req.body.address
 
@@ -275,7 +262,18 @@ app.post('/Campaign', (req, res) => {
 }
 )
 
+app.get('MediaCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
+})
 
+app.get('/NewsItem', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
+}
+)
+
+app.get('/SignRemoveCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/SignRemoveCampaign.html')
+})
 
 app.get('/RemoveCampaign', async function (req, res)  {
   var {address, signature} = req.query
@@ -285,106 +283,58 @@ app.get('/RemoveCampaign', async function (req, res)  {
   var {data, errors} = await graphql(schema, query, root)
 
   if(typeof errors !== "undefined" & errors!== null & errors !==""){
-    res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+    res.redirect(`SignRemoveCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
     return
   }else{
-    res.redirect(`NewCampaign`)
+    res.redirect(`Search`)
     return}
 }
 )
 
-app.get('/Campaign', async function (req, res) {
-  var {address, signature, cause, goal, who, picture} = req.query
-  var {isvalid} = await client.validateAddress(address)
-  if(!isvalid){
-    res.redirect(`NewCampaign?searchTerm=${address}`)
-    return
-  }
-  
-  var exists = dbExists(address)
-  if(!exists) {
-    var query = `mutation {
-	createCampaign(id: "${address}"){id}}`
-    var {data} = await graphql(schema, query, root)
-    console.log("new campaign created.")
-    res.redirect(`DetailsCampaign?address=${req.query.address}`)
-    return
-  }
+app.get('/Search', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Search.html')
+}
+)
 
-  var has = x => typeof x !== "undefined" && x !== ""
-  var hasInput = has(cause)||has(goal)||has(who)||has(picture)
-  var hasSignature = has(signature)
-
-  var query = `query {
-      getCampaign(id: "${req.query.address}"){status}}`
-  var {data} = await graphql(schema, query, root)
-  var {status} = data.getCampaign
-  
-  if(status==="NEW" & hasInput){
-    var query = `mutation {
-      detailsCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}", picture: "${picture}"}){
-	 id}
-       }`
-    var {data} = await graphql(schema, query, root)
-    res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
-    return
-  }
-
-  if(status==="NEW" & !hasInput){
-    res.redirect(`DetailsCampaign?address=${address}`)
-    return
-  }
-
-  if(status==="IMPORTED" & hasSignature & hasInput){
-    var query = `mutation {
-      updateCampaign(id: "${address}", input: {goal: ${goal}, who: "${who}", cause: "${cause}", picture: "${picture}", signature: "${signature}"}){
-	 id}}`
-    var {data, errors} = await graphql(schema, query, root)
-
-    if(typeof errors !== "undefined" & errors!== null & errors !==""){
-      res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
-      return
-    }else{
-      res.redirect(`Campaign?address=${address}`)
-      return}
-  }
-
-  if(status==="IMPORTED"){
-    res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
-    return
-  }
-
+app.get('/Campaign2', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign2.html')
+})
+app.get('/Campaign', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
 })
 
-app.get('/DetailsCampaign', function (req, res) {
-  let address = req.query.address
-
-  // add test for existing data file
-  if(typeof address==="undefined"){res.redirect("NewCampaign")}else{
-
-    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
-  }
-})
-
-app.get('/NewCampaign', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/NewCampaign.html')
-})
-
+// Donate/Share
 app.get('/Donate', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/Donate.html')
 })
+
 app.get('/Share', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/Share.html')
 })
-// ihodl
-app.post('/requestReceipt.html', (req, res) => {
-  const bitcoinPublicKey= req.body.bitcoinPublicKey
-  const shippingAddress= req.body.shippingAddress
-  fs.appendFileSync('/home/davidweisss/reservations', Date.now() + "\n" + bitcoinPublicKey + "\n" + shippingAddress + "\n"  );
 
-  console.log(bitcoinPublicKey, shippingAddress)
-  res.sendFile('/home/davidweisss/iHodLWeb/public/requestReceipt.html')
+// Redeem
+app.get('/RedeemCampaign', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/RedeemCampaign.html')
 })
+
+app.get('/ComputeRedeemCampaign', function (req, res) {
+  let {address, tipPercent, confirmedInNBlocks, destAddr, txMessage} = req.query
+  var tipAddr= "bc1q3qskx3ukwfxsh39cphf0eggvdlf6gppzmv42gu"
+  getFeeRate(parseInt(confirmedInNBlocks), client).then(feeRate =>{
+    console.log(feeRate, typeof feeRate)
+    redeemTx(client, [address], destAddr, tipAddr, tipPercent, feeRate, txMessage)
+    .then(x=> {console.log(x[0].length)
+      res.redirect(`SignRedeemCampaign?${querystring.stringify({address: address, rawtx: x[0], psbt: x[1]})}`)
+    }
+    
+    )
+  })
+})
+
+app.get('/SignRedeemCampaign', async function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/SignRedeemCampaign.html')
+})
+
 
 // http/https server
 var https_options = {

@@ -1,0 +1,80 @@
+# Types
+type Campaign {
+  id: String
+  cause: String
+  description: String
+  goal: Float
+  who: String
+  picture: String
+  created: String
+  status: String
+  raised: String
+  fundingStatus: Funding
+  ismine: Boolean
+  iswatchonly: Boolean
+  newsItems: [NewsItem]
+}
+
+type NewsItem {
+ created: String
+ message: String
+}
+
+type Funding {
+ received: String
+ withdrawn: String
+ balance: String
+}
+
+# Inputs
+input CampaignInput {
+  cause: String
+  goal: Float
+  who: String
+  description: String
+  picture: String
+}
+
+input CampaignRemoveInput {
+  signature: String
+}
+input CampaignUpdateInput {
+  cause: String
+  goal: Float
+  who: String
+  newsItem: String
+  description: String
+  picture: String
+  signature: String
+}
+
+input PopNewsItemInput {
+  newsItem: String
+  signature: String
+}
+
+input MediaInput {
+  picture: String
+  signature: String
+}
+
+input MediaUpdateInput {
+  picture: String
+  signature: String
+}
+# Queries and mutations
+type Mutation {
+  createCampaign(id: String): Campaign
+  detailsCampaign(id: String, input: CampaignInput): Campaign
+  updateCampaign(id: String, input: CampaignUpdateInput): Campaign
+  removeCampaign(id: String, input: CampaignRemoveInput): Campaign
+  setMedia(id: String, input: MediaInput): Campaign
+  updateMedia(id: String, input: MediaUpdateInput): Campaign
+  popNewsItem(id: String, input: PopNewsItemInput): Campaign
+}
+
+type Query {
+  getCampaign(id: String): Campaign 
+  getCampaigns(searchTerm: String): [Campaign] 
+  getRedeemTx(id: String, tipPercent: Float, confirmedInNBlocks: Int, destAddr: String, txMessage: String): Campaign
+}
