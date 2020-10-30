@@ -1,6 +1,7 @@
 var tipAddr= "1Q4PrJKGC9tYPgrtf3tjqELu8UmTHJJCMQ"
 const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./public/db.js')
 const {getFeeRate, redeemTx} = require('./redeem.js')
+const { bitAuth } = require('./bitAuth.js')
 const fileUpload = require('express-fileupload');
 var querystring = require('querystring');
 var fs = require('fs')
@@ -10,6 +11,7 @@ var bodyParser = require("body-parser")
 var express = require('express')
 const { root, client } = require('./public/resolvers.js')
 setInterval(() => { console.log("rescanning");client.rescanBlockchain(); return}, 28800000)
+
 
 // ssl
 var key = fs.readFileSync('/etc/letsencrypt/live/bitfundme.rocks/privkey.pem');
@@ -39,33 +41,99 @@ app.use(express.static('/home/davidweisss/iHodLWeb/public/'))
 app.use(express.static('/home/davidweisss/iHodLWeb/public/campaigns/'))
 app.use(express.static('/home/davidweisss/iHodLWeb/public/pictures/'))
 
+
 //////////////////////////////////////////////
 // Routes
 //////////////////////////////////////////////
-app.get('/gatsby', (req, res)=> {
-  res.sendFile('/home/davidweisss/bitfundme/public/home.html')
-})
-
-
 app.get('/', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/home.html')
 })
-
 
 app.get('/NewAddress', function(req, res){
   res.sendFile('/home/davidweisss/iHodLWeb/public/NewAddress.html')
 })
 
+app.get('/DetailsCampaign', function (req, res) {
+  let address = req.query.address
+  // add test for existing data file
+  if(typeof address==="undefined"){res.redirect("NewAddress")}else{
+    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
+  }
+})
+
+app.get('MediaCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
+})
+
+app.get('/Campaign2', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign2.html')
+})
+
+app.get('/NewsItem', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
+})
+
+app.get('/NewsItem', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
+})
+
+app.get('/SignRemoveCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/SignRemoveCampaign.html')
+})
+
+app.get('/Search', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Search.html')
+})
+
+app.get('/Donate', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Donate.html')
+})
+
+app.get('/Share', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Share.html')
+})
+
+
+//////////////////////////////////////////////
+// Post
+//////////////////////////////////////////////
+app.post('/Campaign', (req, res) => {
+  var address = req.body.address
+  if (req.files === null){
+    res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: "No file chosen"})}`)
+    return
+  }
+  var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
+  req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
+  )
+  res.redirect(`DetailsCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
+})
+
+app.post('/MediaCampaign', (req, res) => {
+  var address = req.body.address
+  if (req.files === null){
+    res.redirect(`MediaCampaign?${querystring.stringify({address: address, message: "No file chosen"})}`)
+    return
+  }
+  var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
+  req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
+  )
+  res.redirect(`MediaCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
+})
+
+
+//////////////////////////////////////////////
+// Endpoints
+//////////////////////////////////////////////
+
 app.get('/ValidateAddress', async function(req, res){
   // 
   const { address } = req.query
-
   let exists = dbExists(address)
   if(exists){
     res.redirect(`NewAddress?message=Address previously added`)
     return
   }
-
   let {isvalid} = await client.validateAddress(address)
   if(!isvalid){
     res.redirect('NewAddress?message=Invalid Address')
@@ -74,8 +142,7 @@ app.get('/ValidateAddress', async function(req, res){
     res.redirect(`ImportAddress?address=${address}`)
     return
   }
-}
-)
+})
 
 app.get('/ImportAddress', async function(req, res){
   let address = req.query.address
@@ -87,19 +154,23 @@ app.get('/ImportAddress', async function(req, res){
   return
 })
 
-
-app.get('/DetailsCampaign', function (req, res) {
-  let address = req.query.address
-
-  // add test for existing data file
-  if(typeof address==="undefined"){res.redirect("NewAddress")}else{
-
-    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
-  }
+// Server-side auth
+app.get('/claimCampaign', bitAuth, async (req, res)=>{
+  console.log('auth: ', req.auth)
+  var {
+    address
+  } = req.query
+  var query = `mutation {
+      claimCampaign(
+      id: "${address}"){
+	 id}
+       }`
+  var {data} = await graphql(schema, query, root)
+  res.redirect(`Campaign2?address=${address}`)
+  return
 })
 
 app.get('/SetDetails', async function(req, res){
-
   var {
     address, 
     cause, 
@@ -108,6 +179,8 @@ app.get('/SetDetails', async function(req, res){
     description,
     picture
   } = req.query
+  // newlines -> \n\n
+  description = description.replace(/(?:\r\n|\r|\n)/g, '\\n\\n ')
   var query = `mutation {
       detailsCampaign(
       id: "${address}", 
@@ -124,9 +197,7 @@ app.get('/SetDetails', async function(req, res){
   return
 })
 
-
 app.get('/UpdateDetails', async function(req, res){
-
   var {
     address,
     cause,
@@ -136,18 +207,21 @@ app.get('/UpdateDetails', async function(req, res){
     picture,
     signature
   } = req.query
-
+  // newlines -> \n\n
+  description = description.replace(/(?:\r\n|\r|\n)/g, '\\n\\n ')
   var query = `mutation {
-      updateCampaign(id: "${address}", 
-      input: {goal: ${goal},
-      who: "${who}",
-      cause: "${cause}",
-      description: "${description}", 
-      picture: "${picture}",
-      signature: "${signature}"}){
-	 id}}`
+      updateCampaign(
+      id: "${address}", 
+      input: {
+       goal: ${goal},
+       who: "${who}",
+       cause: "${cause}",
+       description: "${description}", 
+       picture: "${picture}",
+       signature: "${signature}"}){
+	 id}
+       }`
   var {data, errors} = await graphql(schema, query, root)
-
   if(typeof errors !== "undefined" & errors!== null & errors !==""){
     res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
     return
@@ -156,48 +230,7 @@ app.get('/UpdateDetails', async function(req, res){
     return}
 })
 
-app.get('/PopNewsItem', async function(req, res){
-
-  var {
-    address,
-    newsItem,
-    signature
-  } = req.query
-  console.log(req.query)
-  var query = `mutation {
-      popNewsItem(id: "${address}", 
-      input: {     
-       newsItem: "${newsItem}", 
-       signature: "${signature}"}){
-	 id}}`
-  console.log(query)
-  var {data, errors} = await graphql(schema, query, root)
-
-  if(typeof errors !== "undefined" & errors!== null & errors !==""){
-    res.redirect(`NewsItem?${querystring.stringify({address: address, message: errors[0].message})}`)
-    return
-  }else{
-    res.redirect(`Campaign2?address=${address}`)
-    return}
-})
-
-app.post('/MediaCampaign', (req, res) => {
-  var address = req.body.address
-
-  if (req.files === null){
-    res.redirect(`MediaCampaign?${querystring.stringify({address: address, message: "No file chosen"})}`)
-    return
-  }
-
-  var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
-  req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
-  )
-  res.redirect(`MediaCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
-}
-)
-
 app.get('/SetMedia', async function(req, res){
-
   var {
     address, 
     picture
@@ -214,15 +247,12 @@ app.get('/SetMedia', async function(req, res){
   return
 })
 
-
 app.get('/UpdateMedia', async function(req, res){
-
   var {
     address,
     picture,
     signature
   } = req.query
-
   var query = `mutation {
       updateMedia(id: "${address}", 
       input: {
@@ -230,7 +260,6 @@ app.get('/UpdateMedia', async function(req, res){
       signature: "${signature}"}){
 	 id}}`
   var {data, errors} = await graphql(schema, query, root)
-
   if(typeof errors !== "undefined" & errors!== null & errors !==""){
     res.redirect(`MediaCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
     return
@@ -239,40 +268,28 @@ app.get('/UpdateMedia', async function(req, res){
     return}
 })
 
-app.get('/MediaCampaign', (req, res) => {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
-})
-
-app.get('/NewsItem', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
-}
-)
-app.post('/Campaign', (req, res) => {
-  var address = req.body.address
-
-  if (req.files === null){
-    res.redirect(`DetailsCampaign?${querystring.stringify({address: address, message: "No file chosen"})}`)
+app.get('/PopNewsItem', async function(req, res){
+  var {
+    address,
+    newsItem,
+    signature
+  } = req.query
+  // newlines -> \n\n
+  newsItem = newsItem.replace(/(?:\r\n|\r|\n)/g, '\\n\\n ')
+  console.log(newsItem)
+  var query = `mutation {
+      popNewsItem(id: "${address}", 
+      input: {     
+       newsItem: "${newsItem}", 
+       signature: "${signature}"}){
+	 id}}`
+  var {data, errors} = await graphql(schema, query, root)
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`NewsItem?${querystring.stringify({address: address, message: errors[0].message})}`)
     return
-  }
-
-  var pictureFileExtension = req.files.picture.mimetype.split("/")[1]
-  req.files.picture.mv("public/pictures/tmp-"+address+"."+pictureFileExtension
-  )
-  res.redirect(`DetailsCampaign?${querystring.stringify({address: address, picture: "tmp-"+address+"."+pictureFileExtension})}`)
-}
-)
-
-app.get('MediaCampaign', (req, res) => {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
-})
-
-app.get('/NewsItem', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
-}
-)
-
-app.get('/SignRemoveCampaign', (req, res) => {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/SignRemoveCampaign.html')
+  }else{
+    res.redirect(`Campaign2?address=${address}`)
+    return}
 })
 
 app.get('/RemoveCampaign', async function (req, res)  {
@@ -281,38 +298,18 @@ app.get('/RemoveCampaign', async function (req, res)  {
       removeCampaign(id: "${address}", input: {signature: "${signature}"}){
 	 id}}`
   var {data, errors} = await graphql(schema, query, root)
-
   if(typeof errors !== "undefined" & errors!== null & errors !==""){
     res.redirect(`SignRemoveCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
     return
   }else{
     res.redirect(`Search`)
     return}
-}
-)
-
-app.get('/Search', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Search.html')
-}
-)
-
-app.get('/Campaign2', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign2.html')
-})
-app.get('/Campaign', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
 })
 
-// Donate/Share
-app.get('/Donate', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Donate.html')
-})
-
-app.get('/Share', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Share.html')
-})
-
+//////////////////////////////////////////////
 // Redeem
+// Experimental
+//////////////////////////////////////////////
 app.get('/RedeemCampaign', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/RedeemCampaign.html')
 })
@@ -323,11 +320,10 @@ app.get('/ComputeRedeemCampaign', function (req, res) {
   getFeeRate(parseInt(confirmedInNBlocks), client).then(feeRate =>{
     console.log(feeRate, typeof feeRate)
     redeemTx(client, [address], destAddr, tipAddr, tipPercent, feeRate, txMessage)
-    .then(x=> {console.log(x[0].length)
-      res.redirect(`SignRedeemCampaign?${querystring.stringify({address: address, rawtx: x[0], psbt: x[1]})}`)
-    }
-    
-    )
+      .then(x=> {console.log(x[0].length)
+	res.redirect(`SignRedeemCampaign?${querystring.stringify({address: address, rawtx: x[0], psbt: x[1]})}`)
+      }
+      )
   })
 })
 
@@ -336,7 +332,9 @@ app.get('/SignRedeemCampaign', async function (req, res) {
 })
 
 
+//////////////////////////////////////////////
 // http/https server
+//////////////////////////////////////////////
 var https_options = {
   key: key,
   cert: cert

@@ -28,9 +28,9 @@ query {
     picture
     created
     fundingStatus {
-    received
-    withdrawn
-    balance}
+    receivedSinceCreation
+    withdrawnSinceCreation
+    balanceSinceCreation}
     newsItems {
       created
       message}
@@ -73,7 +73,7 @@ function WhatCampaign(gqlQuery) {
     iswatchonly
   } = data.getCampaign
 
-  const {received, withdrawn, balance}=fundingStatus
+  const {receivedSinceCreation, withdrawnSinceCreation, balanceSinceCreation}=fundingStatus
 
   if (newsItems !== null ){ 
     var cs = newsItems.map(x=>{
@@ -95,8 +95,9 @@ function WhatCampaign(gqlQuery) {
 	</Comment.Content>
       </Comment>
     )
+  // latest posts first
+  cs=cs.reverse()
   }
-
   const causeStyle= {
     fontSize: '3em', 
     fontWeight: 'bold', 
@@ -112,9 +113,10 @@ function WhatCampaign(gqlQuery) {
 
   // 
   let createdSince = (Date.now()-created)/(1000*3600*24)
+  console.log("createdSince",createdSince)
   let olderThan24h= createdSince > 1
 
-  const percentProgress = Math.round((received/goal)*10000)/100
+  const percentProgress = Math.round((receivedSinceCreation/goal)*10000)/100
   return  (
     <Container>
       {/* picture is undefined String when absent!*/}
@@ -127,11 +129,13 @@ function WhatCampaign(gqlQuery) {
       3/ Inputs from creation to end date: use10' block estimate
       A/ btc
       B/ usd? => dotprod(withdrawalbtc, btcusd)
-      use balance here?
+      use balanceSinceCreation here?
       */}
 
       <Progress size="tiny"  percent={percentProgress} color="blue"/>
-      <p><span style={causeStyle}>&#8383;{received}</span> <span style={smallerStyle}>raised of &#8383;{goal} goal (&#8383;{withdrawn} withdrawn, &#8383;{balance} balance)</span></p>
+      <p><span style={causeStyle}>&#8383;{receivedSinceCreation}</span> <span style={smallerStyle}>raised of &#8383;{goal} goal (&#8383;{withdrawnSinceCreation} withdrawn, &#8383;{balanceSinceCreation} balance)</span></p>
+      
+      {!olderThan24h && <Message negative>Warning: transactions may not appear for up to 24h after campaign is created</Message>}
 
       <Button href={`Donate?address=${id}`} primary fluid as="a" size="massive">
 	<i class="bitcoin icon"></i> 
@@ -162,9 +166,11 @@ function WhatCampaign(gqlQuery) {
 	</div>
       }
 
+      {id.charAt(0)==1 && 
       <Button href={`NewsItem?address=${id}`} as="a" size="big">
 	<i class="newspaper icon"></i> 
 	Post update</Button>
+      }
       <Divider/>
       <h3> {"Created: "+Math.round(10*createdSince)/10+" days ago"}</h3> 
       {id.charAt(0)==1 && 

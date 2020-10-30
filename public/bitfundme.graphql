@@ -7,6 +7,7 @@ type Campaign {
   who: String
   picture: String
   created: String
+  createdAtBlock: String
   status: String
   raised: String
   fundingStatus: Funding
@@ -21,9 +22,9 @@ type NewsItem {
 }
 
 type Funding {
- received: String
- withdrawn: String
- balance: String
+ receivedSinceCreation: String
+ withdrawnSinceCreation: String
+ balanceSinceCreation: String
 }
 
 # Inputs
@@ -35,16 +36,17 @@ input CampaignInput {
   picture: String
 }
 
-input CampaignRemoveInput {
-  signature: String
-}
 input CampaignUpdateInput {
   cause: String
   goal: Float
   who: String
-  newsItem: String
   description: String
   picture: String
+  newsItem: String
+  signature: String
+}
+
+input CampaignRemoveInput {
   signature: String
 }
 
@@ -65,6 +67,7 @@ input MediaUpdateInput {
 # Queries and mutations
 type Mutation {
   createCampaign(id: String): Campaign
+  claimCampaign(id: String): Campaign
   detailsCampaign(id: String, input: CampaignInput): Campaign
   updateCampaign(id: String, input: CampaignUpdateInput): Campaign
   removeCampaign(id: String, input: CampaignRemoveInput): Campaign
@@ -76,5 +79,6 @@ type Mutation {
 type Query {
   getCampaign(id: String): Campaign 
   getCampaigns(searchTerm: String): [Campaign] 
+  getAllCampaigns: [Campaign] 
   getRedeemTx(id: String, tipPercent: Float, confirmedInNBlocks: Int, destAddr: String, txMessage: String): Campaign
 }

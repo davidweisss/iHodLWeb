@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { Step, Form, Button, Container, Message, Image, Header, Icon, Segment, TextArea } from 'semantic-ui-react'
+import { Step, Form, Button, Container, Message, Image, Header, Icon, Segment, TextArea, Menu } from 'semantic-ui-react'
 
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
@@ -45,6 +45,22 @@ function DetailsCampaign(gqlQuery)
   console.log(picture)
   return(
     <Container>
+    <div class="ui rail">
+      <div class="ui fixed top sticky">
+	<Menu style={{marginTop:'10px'}} size='massive'>
+	  <Menu.Item as='h1' as='a' href='/'>
+	    <Image fluid size='mini' src='bfmLogo.png'/>	
+	  </Menu.Item>
+	  <Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='/Search'>
+	    Search Campaigns
+	  </Menu.Item>
+	  <Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='https://bitfundme.rocks:3000/tutorials/2020/09/03/Getting-started.html'>
+	    Tutorial
+	  </Menu.Item>
+	</Menu>
+      </div>
+    </div>
+    <div style={{marginTop: '120px'}}>
       {message !== null &&
       <Message negative>
 	<Message.Header> Error: </Message.Header>
@@ -109,6 +125,7 @@ function DetailsCampaign(gqlQuery)
 	</Form>
       </Segment>
       <Header as="h3" style={{color:"Gray"}}>Campaign address: <Icon fitted name="bitcoin"/>{urlParams.get('address')}</Header>
+    </div>
     </Container>
 
   )

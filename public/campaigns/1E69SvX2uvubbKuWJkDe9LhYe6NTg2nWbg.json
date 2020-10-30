@@ -1,0 +1,16 @@
+{
+  "id": "1E69SvX2uvubbKuWJkDe9LhYe6NTg2nWbg",
+  "cause": "Tip Jar for BitFundMe ",
+  "description": "If you like using BitFundMe, consider leaving a tip for the dev",
+  "who": "BitFundMe",
+  "goal": 1,
+  "picture": "1E69SvX2uvubbKuWJkDe9LhYe6NTg2nWbg.png",
+  "newsItems": null,
+  "created": 1599831159264,
+  "createdAtBlock": 647770,
+  "status": "CLAIMED",
+  "raised": null,
+  "fundingStatus": null,
+  "ismine": {},
+  "iswatchonly": {}
+}

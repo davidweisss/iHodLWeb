@@ -20,23 +20,35 @@ var getIsMine= async (addr) => { const {ismine} = await client.getAddressInfo(ad
 var importAddress = async (addr) => {var ok = await client.importAddress( addr, "",  false)
   return(ok)};
 
-var getFundingStatus = async (addr, created, blocksSince = null) => {
-  if ( blocksSince == null ){  
-    blocksSince = Math.round((Date.now()-parseInt(created))/(1000*600))}
-  let r0 = await client.getReceivedByAddress(addr, blocksSince)
-  let r = await client.getReceivedByAddress(addr)
-  let sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
-  let balance = await client.listUnspent(0, blocksSince, [addr])
-  balance=sumListUnspent(balance)
-  let received = r-r0
+const floatify = (a,b) => {
+  return parseFloat((a+b).toFixed(8))
+}
+var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
+
+var getFundingStatus = async (addr, createdAtBlock, created) => {
+  // 1/ use block recorded at creation
+  if ( createdAtBlock === undefined){  
+    var blocksSinceCreation = Math.round((Date.now()-parseInt(created))/(1000*600))}
+  // 2/ or use estimate based on 10' average block spacing
+  else{
+  var blocksSinceCreation = await client.getBlockCount()
+  blocksSinceCreation = blocksSinceCreation - createdAtBlock
+  }
+
+  let receivedUpToCreation = await client.getReceivedByAddress(addr, blocksSinceCreation)
+  let receivedAllTime = await client.getReceivedByAddress(addr)
+  let receivedSinceCreation = floatify(receivedAllTime, -receivedUpToCreation)
+
+  let balanceSinceCreation = await client.listUnspent(0, blocksSinceCreation, [addr])
+  balanceSinceCreation = sumListUnspent(balanceSinceCreation)
   // r-w=b
   // -w=b-r
   // w=r-b
-  let withdrawn = received-balance
+  let withdrawnSinceCreation = floatify(receivedSinceCreation,-balanceSinceCreation)
   return(
-    {received: received, 
-      withdrawn: withdrawn, 
-      balance: balance
+    {receivedSinceCreation : receivedSinceCreation , 
+      withdrawnSinceCreation : withdrawnSinceCreation , 
+      balanceSinceCreation : balanceSinceCreation 
     }
   )
 
@@ -54,6 +66,7 @@ class Campaign{
     this.picture = null
     this.newsItems = null
     this.created = null
+    this.createdAtBlock = null
     this.status = "NEW"
     this.raised = null
     this.fundingStatus = null
@@ -75,16 +88,16 @@ class Campaign{
     this.newsItems = campaign.newsItems
     this.status = campaign.status
     this.created = campaign.created
+    this.createdAtBlock = campaign.createdAtBlock
   }
 
   readAsync() {
     this.ismine = getIsMine(this.id)
     this.iswatchonly= getIsWatchOnly(this.id)
-    this.fundingStatus = getFundingStatus(this.id, this.created)
+    this.fundingStatus = getFundingStatus(this.id, this.createdAtBlock, this.created)
   }
 
   setDetails(details){
-
     Object.keys(details).map(x=>{
       if(details[x] !== "undefined" ){ this[x]= details[x]}
     }
@@ -107,18 +120,25 @@ class Campaign{
     }
   }
 
-
   setStatus(status){
     this.status = status
   }
 }
 
 var root = {
-  createCampaign: ({id}) => {
+  createCampaign: async ({id}) => {
     var c = new Campaign(id)
     c.created = Date.now()
+    c.createdAtBlock = await client.getBlockCount()
     c.write()
     return c
+  },
+  claimCampaign: ({id}) => {
+    var c = new Campaign(id)
+    c.read()
+    c.setStatus("CLAIMED")
+    c.write()
+    return
   },
   detailsCampaign: ({id, input}) => {
     var c = new Campaign(id)
@@ -211,6 +231,15 @@ var root = {
     c.read()
     c.readAsync()
     return c
+  },
+  getAllCampaigns: () =>  { 
+    var ids = dbIDs()
+    var campaigns = ids.map(id =>{
+      var c = new Campaign(id)
+      c.read()
+      return c
+    })
+    return campaigns
   },
   getCampaigns: ({searchTerm}) =>  { 
     var ids = dbIDs()
