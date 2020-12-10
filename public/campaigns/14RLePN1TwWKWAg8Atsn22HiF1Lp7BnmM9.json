@@ -6,7 +6,8 @@
   "picture": "14RLePN1TwWKWAg8Atsn22HiF1Lp7BnmM9.jpg",
   "raised": {},
   "created": 1580590660627,
-  "status": "IMPORTED",
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1q280n8ckek4dlfv5rhskx866jnnt07lrrrdjgh7",
   "ismine": {},
   "iswatchonly": {}
 }

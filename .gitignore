@@ -10,3 +10,17 @@ reservations
 todo
 bitcoinRPCConf.json
 server.log
+public/Campaign2.js
+public/DetailsCampaign.js
+public/MediaCampaign.js
+public/NewAddress.js
+public/NewsItem.js
+public/RedeemCampaign.js
+public/Search.js
+public/Share.js
+public/SignRedeemCampaign.js
+public/SignRemoveCampaign.js
+public/campaigns_backup/
+public/home.js
+public/Donate.js
+public/MediaDetailsCampaign.js

@@ -175,7 +175,7 @@ function WhatCampaign(gqlQuery) {
       <h3> {"Created: "+Math.round(10*createdSince)/10+" days ago"}</h3> 
       {id.charAt(0)==1 && 
       <div>
-	<Button href={`MediaCampaign?address=${id}`} as="a" size="big">
+	<Button href={`MediaDetailsCampaign?address=${id}`} as="a" size="big">
 	  <i class="edit icon"></i> 
 	  Edit</Button>
 	<Button href={`SignRemoveCampaign?address=${id}`} as="a" size="big">

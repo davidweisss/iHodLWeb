@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
-import { Menu, Form, Button, Container, Message, Image } from 'semantic-ui-react'
+import { Segment, Header, Icon, Menu, Form, Button, Container, Message, Image } from 'semantic-ui-react'
 
 class NameForm extends React.Component {
   constructor(props) {
@@ -30,7 +30,7 @@ class NameForm extends React.Component {
 	    this.state.value.charAt(0) !== "1" &&
 	    <Message warning>
 	      <Message.Header> Warning: </Message.Header>
-	      Currently only legacy address format addresses starting with "1" can be modified after creation
+	      Currently only legacy address format addresses starting with "1" can be modified for free after creation
 	    </Message>}
       </Container>
     );
@@ -39,6 +39,7 @@ class NameForm extends React.Component {
 
 var urlParams = new URLSearchParams(window.location.search);
 const message = urlParams.get('message')
+const address = urlParams.get('address')
 const el = 
   <Container>
 
@@ -58,25 +59,37 @@ const el =
       </div>
     </div>
     <div style={{marginTop: '120px'}}>
-      {message !== null &&
-      <Message negative>
-	<Message.Header> Error: </Message.Header>
-	{message}
-      </Message>}
-      <h1>Create New Campaign</h1>
-      <NameForm/>
-      <br/>
-      <br/>
-       <Message
-	 as='a'
-	 href='https://bitfundme.rocks:3000/tutorials/2020/09/05/generate-address.html'
-          icon='graduation'
-        header="Don't have a Bitoin address?"
-        content='Click to learn how to get a suitable Bitcoin address'
-      />
-    </div>
+      <Segment>
+	{message !== null &&
+	<Message negative>
+	  <Message.Header> Error: </Message.Header>
+	  {message}
+	</Message>}
+
+	{address !== null &&
+	  <Header as="h3" style={{color:"Gray"}}>
+	    Visit the campaign page for this address instead:
+	    <br/>
+	    <a href={'https://bitfundme.rocks/Campaign2?address='+urlParams.get('address')} >
+	      Campaign address: <Icon fitted name="bitcoin"/>{urlParams.get('address')}
+	    </a>
+	  </Header>
+	}
+	    </Segment>
+	<h1>Create New Campaign</h1>
+	<NameForm/>
+	<br/>
+	<br/>
+	<Message
+	  as='a'
+	  href='https://bitfundme.rocks:3000/tutorials/2020/09/05/generate-address.html'
+	  icon='graduation'
+	  header="Don't have a Bitoin address?"
+	  content='Click to learn how to get a suitable Bitcoin address'
+	/>
+      </div>
     </Container>
-    
-  ReactDOM.render(
-    el, document.getElementById('NewAddress')
-  );	
+
+	ReactDOM.render(
+	el, document.getElementById('NewAddress')
+	);	

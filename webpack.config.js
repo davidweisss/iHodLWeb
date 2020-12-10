@@ -6,18 +6,15 @@ module.exports = {
   entry: {
     Campaign2: "./public/Campaign2.jsx",
     Search: "./public/Search.jsx",
-    SearchDev: "./public/SearchDev.jsx",
     NewAddress: "./public/NewAddress.jsx",
     Donate: "./public/Donate.jsx",
     Share: "./public/Share.jsx",
     RedeemCampaign: "./public/RedeemCampaign.jsx",
     SignRedeemCampaign: "./public/SignRedeemCampaign.jsx",
     NewsItem: "./public/NewsItem.jsx",
-    MediaCampaign: "./public/MediaCampaign.jsx",
     SignRemoveCampaign: "./public/SignRemoveCampaign.jsx",
     home: "./public/home.jsx",
-    homeDev: "./public/homeDev.jsx",
-    DetailsCampaign: "./public/DetailsCampaign.jsx"},
+    MediaDetailsCampaign: "./public/MediaDetailsCampaign.jsx"},
   mode: "production",
   module: {
     rules: [

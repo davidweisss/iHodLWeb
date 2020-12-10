@@ -1,0 +1,27 @@
+{
+  "id": "1KfuAQ5UiX2tUHy6Fz6ScoKZ9zH2DytBwP",
+  "cause": "Test",
+  "description": "Hey",
+  "who": "Testingot",
+  "goal": 1,
+  "picture": "tmp-1KfuAQ5UiX2tUHy6Fz6ScoKZ9zH2DytBwP.jpeg",
+  "newsItems": [
+    {
+      "created": "1607599113502",
+      "message": "Haaaallpppp"
+    },
+    {
+      "created": "1607599536417",
+      "message": "Paid"
+    }
+  ],
+  "created": 1607598926637,
+  "createdAtBlock": 660746,
+  "status": "FIRSTEDIT",
+  "raised": null,
+  "fundingStatus": null,
+  "ismine": {},
+  "iswatchonly": {},
+  "pay2AuthAddress": "bc1q3t7f76r3ccpnvt33ptvkhgwqqcznrqepxj70a5",
+  "pendingEditForAddress": null
+}

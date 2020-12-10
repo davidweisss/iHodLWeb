@@ -1,13 +1,13 @@
+const { receivedFrom } = require('./receivedFrom.js')
 // Search
 var fuseJs = require("fuse.js")
 // db rw
 const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./db.js')
-
 // bitcoin utils
 // Electrum
-const {electrumxBalance} = require('../electrumxBalance')
+//const {electrumxBalance} = require('./electrumxBalance')
 // Core
-const bitcoinRPCConf = require('../bitcoinRPCConf')
+const bitcoinRPCConf = require('./bitcoinRPCConf')
 const Client = require('bitcoin-core')
 const client = new Client(bitcoinRPCConf)
 var getIsWatchOnly = async (addr) => { const {iswatchonly} = await client.getAddressInfo(addr)
@@ -51,9 +51,7 @@ var getFundingStatus = async (addr, createdAtBlock, created) => {
       balanceSinceCreation : balanceSinceCreation 
     }
   )
-
 }
-
 
 // class
 class Campaign{
@@ -72,6 +70,8 @@ class Campaign{
     this.fundingStatus = null
     this.ismine = dbExists(id) ? getIsMine(this.id): null
     this.iswatchonly=  dbExists(id) ? getIsWatchOnly(this.id): null
+    this.pay2AuthAddress= null
+    this.claimed= false
   }
   write(){
     dbWrite(this)
@@ -89,6 +89,8 @@ class Campaign{
     this.status = campaign.status
     this.created = campaign.created
     this.createdAtBlock = campaign.createdAtBlock
+    this.pay2AuthAddress= campaign.pay2AuthAddress
+    this.claimed= campaign.claimed
   }
 
   readAsync() {
@@ -125,106 +127,88 @@ class Campaign{
   }
 }
 
+
+var isAuth = async (req, client, c) => {
+  let {id, pay2AuthAddress, status} = c
+  let firstTime
+  status === 'IMPORTED'? firstTime=1 : firstTime=0
+  
+  let funded = await receivedFrom(client, pay2AuthAddress, id)
+  console.log('funded:', funded)
+  if(funded) {c.pay2AuthAddress = await client.getNewAddress('legacy')}
+ 
+  let {signedMessage, message='challenge' } = req.query
+  try{
+  var verified = await client.verifyMessage(id, signedMessage, message)}
+  catch(e){
+    var verified=0
+    console.log(e) 
+  }
+  console.log('verified:', verified)
+  return [c, verified | funded | firstTime]
+}
+
 var root = {
   createCampaign: async ({id}) => {
     var c = new Campaign(id)
     c.created = Date.now()
     c.createdAtBlock = await client.getBlockCount()
+    c.pay2AuthAddress = await client.getNewAddress('legacy')
+    importAddress(id)
+    c.setStatus("IMPORTED")
     c.write()
     return c
   },
-  claimCampaign: ({id}) => {
+  updateMediaDetails: async ({id, input} , req ) => {
     var c = new Campaign(id)
     c.read()
-    c.setStatus("CLAIMED")
-    c.write()
-    return
-  },
-  detailsCampaign: ({id, input}) => {
-    var c = new Campaign(id)
-    c.read()
-    if(c.status==="NEW"){
+    let auth
+    [c, auth] = await isAuth(req, client, c)
+    if(auth){
       c.setDetails(input)
-      importAddress(id)
-      c.setStatus("IMPORTED")
+      c.setMedia(input)
+      c.status === 'IMPORTED' && c.setStatus('FIRSTEDIT')
       c.write()
-      return}else{
-	console.log("need signature to update entry.")
-	return
-      }
+      return c
+    }else{
+    throw new Error('Authorization failed')}
   },
-  updateCampaign: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	c.setDetails(input)
-	c.write()
-	return c
-      }else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
-  },
-  setMedia: ({id, input}) => {
+  popNewsItem: async ({id, input}, req) => {
     var c = new Campaign(id)
     c.read()
-    if(c.status==="NEW"){
-      c.setMedia(input)
+    let auth
+    [c, auth] = await isAuth(req, client, c)
+    if(auth){
+      c.popNewsItem(input.newsItem)
       c.write()
-      return}else{
-	console.log("need signature to update entry.")
-	return
-      }
+      return c
+    }else{
+      throw new Error('Authorization failed')}
   },
-  updateMedia: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	c.setMedia(input)
-	c.write()
-	return c
-      }else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
+  removeCampaign: async ({id}, req) => {
+    var c = new Campaign(id)
+    c.read()
+    let auth
+    [c, auth] = await isAuth(req, client, c)
+
+    if(auth){
+      dbRemove(id, c.picture)	
+      return id  
+    }else{
+      throw new Error('Authorization failed')}
   },
-  popNewsItem: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	c.popNewsItem(input.newsItem)
-	c.write()
-	return c
-      }else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
-  },
-  removeCampaign: async ({id, input}) => {
-    try {var verified = await client.verifyMessage(id, input.signature, "challenge")
-      if(verified){
-	var c = new Campaign(id)
-	c.read()
-	dbRemove(id, c.picture)	
-	return id}else{
-	  throw new Error("Bad signature")
-	}
-    }
-    catch(error){
-      throw new Error(error.message)
-    }
+  claimCampaign: async ({id}, req) => {
+    var c = new Campaign(id)
+    c.read()
+    let auth
+    [c, auth] = await isAuth(req, client, c)
+
+    if(auth){
+      c.setStatus("CLAIMED")
+      c.write()
+      return 
+    }else{
+      throw new Error('Authorization failed')}
   },
   getCampaign: ({id}) => {
     var c = new Campaign(id)
@@ -234,6 +218,7 @@ var root = {
   },
   getAllCampaigns: () =>  { 
     var ids = dbIDs()
+    console.log(ids)
     var campaigns = ids.map(id =>{
       var c = new Campaign(id)
       c.read()
@@ -268,9 +253,9 @@ var root = {
   getRedeemTx: async ({address, tipPercent, confirmedInNBlocks, destAddr, txMessage}) => {
     return( await getFeeRate(confirmedInNBlocks, client)
       .then(feeRate =>{
-      redeemTx(client, address, destAddr, tipAddr, tipPercent, feeRate, txMessage)
-    }
-    )
+	redeemTx(client, address, destAddr, tipAddr, tipPercent, feeRate, txMessage)
+      }
+      )
     )
   }
 }

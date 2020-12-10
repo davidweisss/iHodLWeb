@@ -14,6 +14,8 @@ type Campaign {
   ismine: Boolean
   iswatchonly: Boolean
   newsItems: [NewsItem]
+  pay2AuthAddress: String
+  claimed: Boolean
 }
 
 type NewsItem {
@@ -28,7 +30,7 @@ type Funding {
 }
 
 # Inputs
-input CampaignInput {
+input updateMediaDetailsInput {
   cause: String
   goal: Float
   who: String
@@ -36,44 +38,18 @@ input CampaignInput {
   picture: String
 }
 
-input CampaignUpdateInput {
-  cause: String
-  goal: Float
-  who: String
-  description: String
-  picture: String
-  newsItem: String
-  signature: String
-}
-
-input CampaignRemoveInput {
-  signature: String
-}
 
 input PopNewsItemInput {
   newsItem: String
-  signature: String
 }
 
-input MediaInput {
-  picture: String
-  signature: String
-}
-
-input MediaUpdateInput {
-  picture: String
-  signature: String
-}
 # Queries and mutations
 type Mutation {
   createCampaign(id: String): Campaign
+  updateMediaDetails(id: String, input: updateMediaDetailsInput): Campaign
   claimCampaign(id: String): Campaign
-  detailsCampaign(id: String, input: CampaignInput): Campaign
-  updateCampaign(id: String, input: CampaignUpdateInput): Campaign
-  removeCampaign(id: String, input: CampaignRemoveInput): Campaign
-  setMedia(id: String, input: MediaInput): Campaign
-  updateMedia(id: String, input: MediaUpdateInput): Campaign
   popNewsItem(id: String, input: PopNewsItemInput): Campaign
+  removeCampaign(id: String): Campaign
 }
 
 type Query {
