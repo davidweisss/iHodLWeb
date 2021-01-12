@@ -3,7 +3,7 @@ const getFeeRate = (confirmedInNBlocks, client)=>client.estimateSmartFee(confirm
     let feeRate= f.feerate
     return feeRate})
 
-const pay2AuthTx= (client, addr, changeAddr=addr, pay2AuthAddr, tip=0.00000001, feeRate, txMessage)=>{
+const pay2AuthTx= (client, addr,  pay2AuthAddr,  feeRate, tip=0.00000001, txMessage='https://BitFundMe.rocks', changeAddr=addr)=>{
   return(
       client.listUnspent(0, 9999999, addr)
 	.then(x => {

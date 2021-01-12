@@ -6,7 +6,10 @@
   "picture": "1JADsmDFX9d2TXis63S9F9L8eDAXwJmnWE.jpg",
   "raised": {},
   "created": 1580847425805,
-  "status": "IMPORTED",
+  "startDate": 1546210800000,
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1q6lagqjvf0k7hrx0fd5kk3thh0wwj026pfdusy3",
   "ismine": {},
   "iswatchonly": {}
 }

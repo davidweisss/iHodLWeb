@@ -19,7 +19,6 @@ var dbRemove = (id, picture) => {
 
 var dbIDs = ids => {
  var ids = fs.readdirSync(rootPath+campaignsPath)
-  console.log(ids)
   ids=  ids.map(x => x.split(".")).map(x=>x[0])
   return(ids)
 }

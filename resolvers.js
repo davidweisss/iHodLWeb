@@ -3,6 +3,7 @@ const { receivedFrom } = require('./receivedFrom.js')
 var fuseJs = require("fuse.js")
 // db rw
 const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./db.js')
+const { getFeeRate, pay2AuthTx} = require('./pay2AuthTx.js')
 // bitcoin utils
 // Electrum
 //const {electrumxBalance} = require('./electrumxBalance')
@@ -10,6 +11,23 @@ const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./db.js')
 const bitcoinRPCConf = require('./bitcoinRPCConf')
 const Client = require('bitcoin-core')
 const client = new Client(bitcoinRPCConf)
+
+let BTC2Sats = (inBTC) => { 
+	let dotIdx =  inBTC.search(/\./)
+	if(dotIdx<0){return (inBTC+'0'.repeat(8))}
+	let addNZeroes = 8 - (inBTC.length - dotIdx-1)
+	let inSats = (inBTC+'0'.repeat(addNZeroes)).replace(/\./, '')
+	return inSats
+}
+
+let sats2BTC = (inSats) =>  {
+	if(inSats.length<9){
+		inSats = '0'.repeat(8-inSats.length+1)+inSats}
+	let inSatsArr = [...inSats]
+	inSatsArr.splice(-8, 0, '.')
+	return(inSatsArr.join('').replace(/\.?0+$/,''))
+}
+
 var getIsWatchOnly = async (addr) => { const {iswatchonly} = await client.getAddressInfo(addr)
   return iswatchonly
 }
@@ -23,33 +41,26 @@ var importAddress = async (addr) => {var ok = await client.importAddress( addr, 
 const floatify = (a,b) => {
   return parseFloat((a+b).toFixed(8))
 }
-var sumListUnspent = arr => arr.length > 0 ? arr.map( x => x.amount).reduce((x, y) => x+y) : 0
+var sumListUnspent = arr => arr.length > 0 ? arr.map( x => BTC2Sats(x.amount.toString())).reduce((x, y) => parseInt(x)+parseInt(y)) : 0
 
-var getFundingStatus = async (addr, createdAtBlock, created) => {
-  // 1/ use block recorded at creation
-  if ( createdAtBlock === undefined){  
-    var blocksSinceCreation = Math.round((Date.now()-parseInt(created))/(1000*600))}
-  // 2/ or use estimate based on 10' average block spacing
-  else{
-  var blocksSinceCreation = await client.getBlockCount()
-  blocksSinceCreation = blocksSinceCreation - createdAtBlock
-  }
+var getFundingStatus = async (addr, created) => {
+  let blocksSinceCreation = Math.round((Date.now()-parseInt(created))/(1000*600))
 
   let receivedUpToCreation = await client.getReceivedByAddress(addr, blocksSinceCreation)
   let receivedAllTime = await client.getReceivedByAddress(addr)
-  let receivedSinceCreation = floatify(receivedAllTime, -receivedUpToCreation)
-
+  let receivedSinceCreation = BTC2Sats(receivedAllTime.toString()) - BTC2Sats(receivedUpToCreation.toString())
   let balanceSinceCreation = await client.listUnspent(0, blocksSinceCreation, [addr])
   balanceSinceCreation = sumListUnspent(balanceSinceCreation)
   // r-w=b
   // -w=b-r
   // w=r-b
-  let withdrawnSinceCreation = floatify(receivedSinceCreation,-balanceSinceCreation)
+  let withdrawnSinceCreation = parseInt(receivedSinceCreation)-parseInt(balanceSinceCreation)
+  let fundingStatus = {receivedSinceCreation : sats2BTC(receivedSinceCreation.toString()) , 
+    withdrawnSinceCreation : sats2BTC(withdrawnSinceCreation.toString()) , 
+    balanceSinceCreation : sats2BTC(balanceSinceCreation.toString())
+  }
   return(
-    {receivedSinceCreation : receivedSinceCreation , 
-      withdrawnSinceCreation : withdrawnSinceCreation , 
-      balanceSinceCreation : balanceSinceCreation 
-    }
+    fundingStatus
   )
 }
 
@@ -60,14 +71,17 @@ class Campaign{
     this.cause = null
     this.description = null
     this.who = null
+    this.url= null
     this.goal = null
     this.picture = null
     this.newsItems = null
     this.created = null
     this.createdAtBlock = null
+    this.startDate= null
+    this.endDate = null
     this.status = "NEW"
     this.raised = null
-    this.fundingStatus = null
+    this.fundingStatus = {receivedSinceCreation: null, withdrawnSinceCreation: null, balanceSinceCreation: null} 
     this.ismine = dbExists(id) ? getIsMine(this.id): null
     this.iswatchonly=  dbExists(id) ? getIsWatchOnly(this.id): null
     this.pay2AuthAddress= null
@@ -81,6 +95,7 @@ class Campaign{
   read() {
     var campaign = dbRead(this.id)
     this.who = campaign.who
+    this.url = campaign.url
     this.goal = campaign.goal
     this.cause = campaign.cause 
     this.description = campaign.description 
@@ -89,14 +104,25 @@ class Campaign{
     this.status = campaign.status
     this.created = campaign.created
     this.createdAtBlock = campaign.createdAtBlock
+    this.startDate= campaign.startDate 
+    this.endDate = campaign.endDate 
     this.pay2AuthAddress= campaign.pay2AuthAddress
     this.claimed= campaign.claimed
   }
 
-  readAsync() {
+  async readAsync() {
     this.ismine = getIsMine(this.id)
     this.iswatchonly= getIsWatchOnly(this.id)
-    this.fundingStatus = getFundingStatus(this.id, this.createdAtBlock, this.created)
+    if(this.endDate===''){
+      this.fundingStatus = getFundingStatus(this.id, this.startDate)
+    }else{
+     let uptoStartFundingStatus = getFundingStatus(this.id, this.startDate)
+     let uptoEndFundingStatus = getFundingStatus(this.id, this.endDate)
+
+      await Promise.all([uptoStartFundingStatus, uptoEndFundingStatus]).then((v) => {
+	Object.keys(this.fundingStatus).map(x => this.fundingStatus[x] = v[0][x]- v[1][x])
+      });
+    }
   }
 
   setDetails(details){
@@ -109,9 +135,11 @@ class Campaign{
   setMedia({picture}){
     var tmpPicture= picture
     picture = picture.split("tmp-")[1]
+    if(picture){
     var picturePath = "/home/davidweisss/iHodLWeb/public/pictures/"
     fs.renameSync(picturePath+tmpPicture, picturePath+picture)
     this.picture = picture
+    }
   }
 
   popNewsItem(newsItem){
@@ -142,7 +170,7 @@ var isAuth = async (req, client, c) => {
   var verified = await client.verifyMessage(id, signedMessage, message)}
   catch(e){
     var verified=0
-    console.log(e) 
+  //  console.log(e) 
   }
   console.log('verified:', verified)
   return [c, verified | funded | firstTime]
@@ -160,6 +188,7 @@ var root = {
     return c
   },
   updateMediaDetails: async ({id, input} , req ) => {
+    console.log('in resolvers', input)
     var c = new Campaign(id)
     c.read()
     let auth
@@ -198,27 +227,28 @@ var root = {
       throw new Error('Authorization failed')}
   },
   claimCampaign: async ({id}, req) => {
+    console.log('in ClaimCampaign resolver')
     var c = new Campaign(id)
     c.read()
     let auth
     [c, auth] = await isAuth(req, client, c)
 
     if(auth){
-      c.setStatus("CLAIMED")
+      c.claimed=true
       c.write()
       return 
     }else{
       throw new Error('Authorization failed')}
   },
-  getCampaign: ({id}) => {
+  getCampaign: async ({id}) => {
     var c = new Campaign(id)
     c.read()
-    c.readAsync()
+    await c.readAsync()
+    console.log(c)
     return c
   },
   getAllCampaigns: () =>  { 
     var ids = dbIDs()
-    console.log(ids)
     var campaigns = ids.map(id =>{
       var c = new Campaign(id)
       c.read()
@@ -242,13 +272,27 @@ var root = {
       minMatchCharLength: 1,
       keys: [
 	"who",
+	"url",
 	"cause",
+	"description",
 	"id"
       ]
     }
     var fuse = new fuseJs(campaigns, searchOptions);
     var searchResults = fuse.search(searchTerm)
     return searchResults
+  },
+  getPay2AuthTx: async ({address, tip, confirmedInNBlocks, txMessage})=>{
+    var c = new Campaign(address)
+    c.read()
+    getFeeRate(parseInt(confirmedInNBlocks), client).then(feeRate =>{
+      console.log(feeRate, typeof feeRate)
+      pay2AuthTx(client, [address], c.id, c.pay2AuthAddress, feeRate, tip, txMessage)
+	.then(x=> {
+	  return(x[1])
+	}
+	)
+    })
   },
   getRedeemTx: async ({address, tipPercent, confirmedInNBlocks, destAddr, txMessage}) => {
     return( await getFeeRate(confirmedInNBlocks, client)

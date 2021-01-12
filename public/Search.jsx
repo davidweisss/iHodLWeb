@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
+import ReactMarkdown from 'react-markdown'
 import { Menu, Form, Button, Container, Grid, Image, Header, Icon, Progress } from 'semantic-ui-react'
+import NavMenu from './NavMenu.jsx'
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
@@ -26,6 +28,9 @@ query {getAllCampaigns{
   goal
   cause
   created
+  startDate
+  endDate
+  claimed
   picture
 }}
 `;
@@ -37,6 +42,9 @@ query {getCampaigns(searchTerm:"${searchTerm}"){
   goal
   cause
   created
+  startDate
+  endDate
+  claimed
   picture
 }}
 `;
@@ -67,10 +75,10 @@ const CampaignsGrid = (props) =>
   }
   let headerStyle = {color: 'white'}
   var cs =  props.d.map(x =>
-    <Grid.Column style={padding}  as="a" href={"https://bitfundme.rocks/Campaign2?address="+x.id}>
+    <Grid.Column style={padding}  as="a" href={"https://bitfundme.rocks/Campaign?address="+x.id}>
       <div style={paddingInner}>
-	<Header style={headerStyle} as="h3"> {x.who} </Header>
-	<Header style={headerStyle} as="h2"> {x.cause} </Header>
+	<Header style={headerStyle} as="h3"> <ReactMarkdown source={x.who}/> </Header>
+	<Header style={headerStyle} as="h2"> <ReactMarkdown source={x.cause}/> </Header>
 	{x.picture !== null ? 
 	  <Image centered bordered style={{borderRadius: '5px'}} src={x.picture} />
 	  : 
@@ -85,6 +93,16 @@ const CampaignsGrid = (props) =>
   )
 }
 
+let isCurrent = (c) => {
+  let current
+  if(c.endDate){ 
+    current = Date.now() > parseInt(c.startDate) && Date.now() < parseInt(c.endDate) 
+  }else{
+    current = Date.now() > parseInt(c.startDate) 
+  }
+  if(current){return 1}else{return 0}
+}
+
 function LatestCampaigns(gqlQuery) {
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
   if (loading) return <Loading/>
@@ -94,7 +112,11 @@ function LatestCampaigns(gqlQuery) {
   }
 
   var d = data.getAllCampaigns
-  d = d.sort((a,b) => b.created - a.created)
+
+  d = d.sort((a,b) => b.startDate- a.startDate)
+  d = d.sort((a,b) => isCurrent(b)- isCurrent(a))
+  d = d.sort((a,b) => (b.claimed?1:0)- (a.claimed?1:0))
+  
   return (<CampaignsGrid d={d} cols={4}/>)
 }
 
@@ -118,44 +140,31 @@ let SearchHeader = (props) => <Header style={{
 
   const el = 
     <Container>
-	<div class="ui rail">
-	  <div class="ui fixed top sticky">
-      <Menu style={{marginTop:'10px'}} size='massive'>
-	    <Menu.Item as='h1' as='a' href='/'>
-	      <Image fluid size='mini' src='bfmLogo.png'/>	
-	    </Menu.Item>
-	<Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='/NewAddress'>
-	      Create New Campaign
-	    </Menu.Item>
-	  </Menu>
+      <NavMenu active="search"/>
+      <Container style={{marginTop:'120px'}}>
+	<Header as="h2">Search Campaign</Header>
+	<Form action="Search">
+	  <Form.Field as="h2">
+	    <input name="searchTerm" type="text"/> <br/>
+	  </Form.Field>
+	  <Button style={{backgroundColor: 'orange'}} primary size="massive" type='submit'>Search</Button>
+	</Form>
+      </Container>
+      <ApolloProvider client={client}>
+	<br/>
+	<br/>
+	{searchTerm && 
+	<div>
+	  <SearchHeader  title={'Search results for:' + searchTerm}/>
+	  <SearchCampaigns gqlQuery={WHAT_CAMPAIGNS}/>
 	</div>
-      </div>
-	  <br/>
-	  <br/>
-	  <Container style={{marginTop:'80px'}}>
-	    <Header as="h2">Search Campaign</Header>
-	    <Form action="Search">
-	      <Form.Field as="h2">
-		<input name="searchTerm" type="text"/> <br/>
-	      </Form.Field>
-	      <Button style={{backgroundColor: 'orange'}} primary size="massive" type='submit'>Search</Button>
-	    </Form>
-	  </Container>
-	  <ApolloProvider client={client}>
-	    <br/>
-	    <br/>
-	    {searchTerm && 
-	    <div>
-	      <SearchHeader  title={'Search results for:' + searchTerm}/>
-	      <SearchCampaigns gqlQuery={WHAT_CAMPAIGNS}/>
-	    </div>
-	    }
-	    <br/>
-	    <br/>
+	}
+	<br/>
+	<br/>
 
-	    <SearchHeader  title={'Latest Campaigns'}/>
-	    <LatestCampaigns gqlQuery={ALL_CAMPAIGNS}/>
-	</ApolloProvider>
+	<SearchHeader  title={'Latest Campaigns (active and claimed campaigns appear first)'}/>
+	<LatestCampaigns gqlQuery={ALL_CAMPAIGNS}/>
+      </ApolloProvider>
     </Container>
 
   ReactDOM.render(

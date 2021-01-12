@@ -37,6 +37,7 @@
 		"prop-types": "^15.7.2",
 		"qrcode.react": "^1.0.0",
 		"react": "^16.12.0",
+		"react-datepicker": "^3.3.0",
 		"react-dom": "^16.12.0",
 		"react-markdown": "^4.3.1",
 		"react-share": "^4.0.1",

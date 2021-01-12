@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom';
 import { Menu, Form, Button, Container, Message, Image, Header, Icon, Segment, TextArea } from 'semantic-ui-react'
+import NavMenu from './NavMenu.jsx'
 
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
@@ -20,27 +21,11 @@ var urlParams = new URLSearchParams(window.location.search);
 
 const DETAILS_CAMPAIGN = gql`
 query {getCampaign(id:"${urlParams.get('address')}"){
-  status
   pay2AuthAddress
 }}
 `
-let Navigation = () => 
-  <div class="ui rail">
-    <div class="ui fixed top sticky">
-      <Menu style={{marginTop:'10px'}} size='massive'>
-	<Menu.Item as='h1' as='a' href='/'>
-	  <Image fluid size='mini' src='bfmLogo.png'/>	
-	</Menu.Item>
-	<Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='/Search'>
-	  Search Campaigns
-	</Menu.Item>
-	<Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='https://bitfundme.rocks:3000/tutorials/2020/09/03/Getting-started.html'>
-	  Tutorial
-	</Menu.Item>
-      </Menu>
-    </div>
-  </div>
-    function DetailsCampaign(gqlQuery)
+
+function DetailsCampaign(gqlQuery)
 {
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
   if (loading) return (
@@ -52,27 +37,29 @@ let Navigation = () =>
   if (error){
     return <p>ERROR: {error.message}</p>
   }
-  const {status, pay2AuthAddress} = data.getCampaign
+  const {pay2AuthAddress} = data.getCampaign
   const message = urlParams.get('message')
+  let address = urlParams.get('address')
+  console.log('in jsx.', message, pay2AuthAddress, address)
   return(
     <Container>
-      <Navigation/>
+      <NavMenu active='Campaign'/>
       <div style={{marginTop: '120px'}}>
 	{message !== null &&
 	<Message negative>
 	  <Message.Header> Error: </Message.Header>
 	  {message}
 	</Message>}
-	<h1>Confirm remove campaign</h1>
-	<Form id="remove" action='RemoveCampaign'>
+	<h1>Claim Campaign</h1>
+	<Form id="claim" action='ClaimCampaign'>
 	  <BitAuth pay2AuthAddress={pay2AuthAddress}/>
 
 	  <Form.Field>
-		<input type="hidden" name="address" value={urlParams.get('address')}/>
+		<input type="hidden" name="address" value={address}/>
 	      </Form.Field>
-	  <Button primary negative size="massive" type='submit'>
-	    <i class="delete icon"></i>
-	    Delete</Button>
+	  <Button primary size="massive" type='submit'>
+	    <i class="paw icon"></i>
+	    Claim</Button>
 	</Form>
       </div>
       <Header as="h3" style={{color:"Gray"}}>
@@ -89,6 +76,5 @@ const el =
     <DetailsCampaign  gqlQuery={DETAILS_CAMPAIGN}/>
   </ApolloProvider>
 
-  ReactDOM.render(
-    el, document.getElementById('SignRemoveCampaign')
-  );	
+ReactDOM.render(
+    el, document.getElementById('SignClaimCampaign'));	

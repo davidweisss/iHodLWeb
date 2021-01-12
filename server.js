@@ -2,7 +2,6 @@ var tipAddr= "1Q4PrJKGC9tYPgrtf3tjqELu8UmTHJJCMQ"
 const { dbExists, dbRead, dbWrite, dbRemove, dbIDs } = require('./db.js')
 const {getFeeRate, redeemTx} = require('./redeem.js')
 const {pay2AuthTx} = require('./pay2AuthTx.js')
-const { bitAuth } = require('./bitAuth.js')
 const fileUpload = require('express-fileupload');
 var querystring = require('querystring');
 var fs = require('fs')
@@ -66,20 +65,17 @@ app.get('/MediaCampaign', function (req, res) {
     res.sendFile('/home/davidweisss/iHodLWeb/public/MediaCampaign.html')
 })
 
-app.get('/DetailsCampaign', function (req, res) {
-  let address = req.query.address
-  // add test for existing data file
-  if(typeof address==="undefined"){res.redirect("NewAddress")}else{
-    res.sendFile('/home/davidweisss/iHodLWeb/public/DetailsCampaign.html')
-  }
-})
 
-app.get('/Campaign2', function (req, res) {
-  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign2.html')
+app.get('/Campaign', function (req, res) {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/Campaign.html')
 })
 
 app.get('/NewsItem', function (req, res) {
   res.sendFile('/home/davidweisss/iHodLWeb/public/NewsItem.html')
+})
+
+app.get('/SignClaimCampaign', (req, res) => {
+  res.sendFile('/home/davidweisss/iHodLWeb/public/SignClaimCampaign.html')
 })
 
 app.get('/SignRemoveCampaign', (req, res) => {
@@ -160,19 +156,6 @@ app.get('/ImportAddress', async function(req, res){
 })
 
 // Server-side auth
-app.get('/ClaimCampaign', async (req, res)=>{
-  var {
-    address
-  } = req.query
-  var query = `mutation {
-      claimCampaign(
-      id: "${address}"){
-	 id}
-       }`
-  var {data} = await graphql(schema, query, root)
-  res.redirect(`Campaign2?address=${address}`)
-  return
-})
 
 app.get('/UpdateMediaDetails', async function(req, res){
   let {
@@ -180,25 +163,34 @@ app.get('/UpdateMediaDetails', async function(req, res){
     cause,
     goal,
     who,
+    url,
+    startDate,
+    endDate,
     description,
     picture
   } = req.query
   description && description.replace(/(?:\r\n|\r|\n)/g, '\\n\\n ')
-  
+
     var query = `mutation {
-    updateDetails(`
+    updateMediaDetails(`
       +
       `id: "${address}",` 
       +
       'input: {'
       +
-      (goal ? `goal: ${goal},`: '')
+      (goal ? `goal: ${goal},`: `goal: 0,`)
+      +
+      (startDate? `startDate: "${startDate}",`: '')
+      +
+      (endDate? `endDate: "${endDate}",`: `endDate: "",`)
       +
       (who ? `who: "${who}",`: '')
       +
+      (url ? `who: "${url}",`: '')
+      +
       (cause ? `cause: "${cause}",`: '')
       +
-      (description ? `description: "${description}",`: '')
+      (description ? `description: """${description}""",`: '')
       +
       (picture ? `picture: "${picture}"` : '')
       + 
@@ -210,7 +202,7 @@ app.get('/UpdateMediaDetails', async function(req, res){
     res.redirect(`MediaDetailsCampaign?${querystring.stringify({address: address, message: errors[0].message, picture: picture})}`)
     return
   }else{
-      res.redirect(`Campaign2?address=${address}`)
+      res.redirect(`Campaign?address=${address}`)
     return}
 })
 
@@ -242,7 +234,6 @@ app.get('/PopNewsItem', async function(req, res){
   } = req.query
   // newlines -> \n\n
   newsItem && newsItem.replace(/(?:\r\n|\r|\n)/g, '\\n\\n ')
-  console.log(newsItem)
   var query = `mutation {
       popNewsItem(id: "${address}", 
       input: {     
@@ -254,8 +245,28 @@ app.get('/PopNewsItem', async function(req, res){
     res.redirect(`NewsItem?${querystring.stringify({address: address, message: errors[0].message, newsItem:newsItem})}`)
     return
   }else{
-    res.redirect(`Campaign2?address=${address}`)
+    res.redirect(`Campaign?address=${address}`)
     return}
+})
+
+app.get('/ClaimCampaign', async (req, res)=>{
+  let {
+    address
+  } = req.query
+  let query = `mutation {
+      claimCampaign(
+      id: "${address}"){
+	 id}
+       }`
+  let {data, errors} = await graphql(schema, query, root, context=req)
+
+  if(typeof errors !== "undefined" & errors!== null & errors !==""){
+    res.redirect(`SignClaimCampaign?${querystring.stringify({address: address, message: errors[0].message})}`)
+    return
+  }else{
+    res.redirect(`Campaign?address=${address}`)
+    return
+  }
 })
 
 app.get('/RemoveCampaign', async function (req, res)  {

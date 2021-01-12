@@ -5,7 +5,10 @@
   "goal": 1000000,
   "picture": "bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97.jpg",
   "created": 1581455685503,
-  "status": "IMPORTED",
+  "startDate": 1375308000000,
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1qrcwtvvs3uaq9z29udrz0gh3jur38psu3m06z9d",
   "raised": null,
   "ismine": {},
   "iswatchonly": {}

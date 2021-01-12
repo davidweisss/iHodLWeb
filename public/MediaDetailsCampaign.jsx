@@ -1,6 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import ReactDOM from 'react-dom';
-import { Menu, Step, Form, Button, Container, Message, Image, Header, Icon, Segment, TextArea } from 'semantic-ui-react'
+import { Checkbox, Menu, Step, Form, Button, Container, Message, Image, Header, Icon, Segment, TextArea } from 'semantic-ui-react'
+
+import NavMenu from './NavMenu.jsx'
+
+import DatePicker from "react-datepicker"
+import "./react-datepicker.css"
 
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider, useQuery } from '@apollo/react-hooks';
@@ -22,33 +27,19 @@ const DETAILS_CAMPAIGN = gql`
 query {getCampaign(id:"${urlParams.get('address')}"){
   status
   goal
+  startDate
+  endDate
   description
   who
+  url
   cause
   picture
   pay2AuthAddress
 }}
 `
 
-let Navigation = () => 
-  <div class="ui rail">
-    <div class="ui fixed top sticky">
-      <Menu style={{marginTop:'10px'}} size='massive'>
-	<Menu.Item as='h1' as='a' href='/'>
-	  <Image fluid size='mini' src='bfmLogo.png'/>	
-	</Menu.Item>
-	<Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='/Search'>
-	  Search Campaigns
-	</Menu.Item>
-	<Menu.Item style={{color: 'teal', fontWeight: 'bold'}} as='h1' as='a' href='https://bitfundme.rocks:3000/tutorials/2020/09/03/Getting-started.html'>
-	  Tutorial
-	</Menu.Item>
-      </Menu>
-    </div>
-  </div>
-
 let MediaDetailsCampaign = (gqlQuery) => {
-  
+
   let prevNextStyle={
     textAlign: 'center',
     margin: '30px 0px 60px 0px '
@@ -56,7 +47,22 @@ let MediaDetailsCampaign = (gqlQuery) => {
 
   const [active, setActive] = urlParams.get('active')? useState(urlParams.get('active')):useState('picture')
 
+
+  const [openEnded, setOpenEnded] = useState('false');
+  const [startDate, setStartDate] = useState(Date.now());
+  const [endDate, setEndDate] = useState((new Date( Date.now() + (6.048e+8 ) )).getTime());
+
   const { data, loading, error } = useQuery(gqlQuery.gqlQuery);
+  useEffect(() => {
+    if (!loading && !error && data){
+      data.getCampaign.startDate && setStartDate(parseInt(data.getCampaign.startDate))
+      data.getCampaign.endDate && setEndDate(parseInt(data.getCampaign.endDate));
+      if (data.getCampaign.endDate === ''){
+	setEndDate('');
+      }
+    }}
+    , [loading, error, data])
+
   if (loading) return (
     <Container>
       <br/> <br/>
@@ -67,15 +73,14 @@ let MediaDetailsCampaign = (gqlQuery) => {
     return <p>ERROR: {error.message}</p>
   }
 
-  let {picture, status, goal, description, who, cause, pay2AuthAddress} = data.getCampaign
+  let {picture, status, goal, description, who, url, cause, pay2AuthAddress} = data.getCampaign
   const message = urlParams.get('message')
-  console.log(picture)
+
   if(urlParams.get('picture')){picture = urlParams.get('picture')}
-  console.log(picture)
 
   return(
     <Container>
-      <Navigation/>
+      <NavMenu/>
       <div style={{marginTop: '120px'}}>
 	{message !== null &&
 	<Message negative>
@@ -108,8 +113,8 @@ let MediaDetailsCampaign = (gqlQuery) => {
 	    </Step>
 	  </Step.Group>
 
-	    {active === 'picture' &&
-	    <div>
+	  {active === 'picture' &&
+	  <div>
 	    <Form id="picture" action="MediaCampaign" method="POST" enctype="multipart/form-data">
 	      <Form.Field as="h2">
 		<label>Picture</label>
@@ -124,69 +129,113 @@ let MediaDetailsCampaign = (gqlQuery) => {
 	    </Form>
 	    <br/>
 
-		{picture !== null && <Image src={picture}/>}
+	    {picture !== null && <Image src={picture}/>}
 
-	      </div>
+	  </div>
+	  }
+
+	  <Form id="details" action='UpdateMediaDetails'>
+	    {active === 'details' &&
+	    <div>
+	      <Form.Field as="h2">
+		<label>Cause</label>
+		<input name="cause" defaultValue={cause || null} placeholder='What the funds are for' />
+	      </Form.Field>
+	      <Form.Field as="h2">
+		<label>Who</label>
+		<input name="who" defaultValue={who || null} placeholder='Anon ok' />
+	      </Form.Field>
+	      <Form.Field as="h2">
+	      <Form.Field as="h2">
+		<label>Website</label>
+		<input name="url" defaultValue={url|| null} placeholder='Link to organisation of more info' />
+	      </Form.Field>
+		<label>Goal</label>
+		<input pattern="^(?=.+)(?:[1-9]\d*|0)?(?:\.\d+)?$" name="goal" defaultValue={goal || null} placeholder='Amount in BTC' />
+	      </Form.Field>
+	      <Form.Field as="h2">
+		<label>Dates </label>
+		<>
+		  { !openEnded &&
+		  <DatePicker 
+		    selected={startDate} 
+		    onChange={date => setStartDate(date)} 
+		  />}
+		  {openEnded &&
+		    <>
+		      <DatePicker
+			selected={startDate}
+			onChange={date => setStartDate(date)}
+			selectsStart
+			startDate={startDate}
+			endDate={endDate}
+		      />
+		      <DatePicker
+			selected={endDate}
+			onChange={date => setEndDate(date)}
+			selectsEnd
+			startDate={startDate}
+			endDate={endDate}
+			minDate={startDate}
+		      />
+		    </>
+		  }
+		  <br/>
+		  <Checkbox toggle onChange={()=>{
+		    setOpenEnded(!openEnded)
+		    setEndDate('') 
+		  }} label='Open Ended'/>
+		  <input type="hidden" name="endDate" value={endDate===''? endDate :(new Date(endDate).getTime())}/>
+		  <input type="hidden" name="startDate" value={(new Date(startDate).getTime())}/>
+		</>
+	      </Form.Field>
+	      <Form.Field as="h2">
+		<label>Description</label>
+		<TextArea name="description" defaultValue={description || null} placeholder='More details about fundraiser' />
+	      </Form.Field>
+	    </div>
 	    }
 
-	    <Form id="details" action='UpdateMediaDetails'>
-	      {picture !== null &&
-		<Form.Field>
-		  <input type="hidden" name="picture" value={picture}/>
-		</Form.Field>
-	      }
-	      {active === 'details' &&
-		<div>
-		  <Form.Field as="h2">
-		    <label>Cause</label>
-		    <input name="cause" defaultValue={cause || null} placeholder='What the funds are for' />
-		  </Form.Field>
-		  <Form.Field as="h2">
-		    <label>Who</label>
-		    <input name="who" defaultValue={who || null} placeholder='Anon ok' />
-		  </Form.Field>
-		  <Form.Field as="h2">
-		    <label>Goal</label>
-		    <input pattern="^(?=.+)(?:[1-9]\d*|0)?(?:\.\d+)?$" required name="goal" defaultValue={goal || null} placeholder='Amount in BTC' />
-		  </Form.Field>
-		  <Form.Field as="h2">
-		    <label>Description</label>
-		    <TextArea name="description" defaultValue={description || null} placeholder='More details about fundraiser' />
-		  </Form.Field>
-		</div>
-	      }
-	      
-	      {active === 'picture' &&
-		<div style={prevNextStyle}>
-		  <Button type='button'
-		    onClick={() => setActive('details')}
-		  >
-		    Next
-		  </Button>
-		</div>
-	      }
-	      {active === 'details' &&
-		<div style={prevNextStyle}>
-		  <Button type='button'
-		    onClick={() => setActive('picture')}
-		  >
-		    Start over
-		  </Button>
-		</div>
-	      }
-	      {status === "FIRSTEDIT" &&
-		<BitAuth pay2AuthAddress={pay2AuthAddress}/>
-	      }
+	    {active === 'picture' &&
+	      <div style={prevNextStyle}>
+		<Button type='button'
+		  onClick={() => setActive('details')}
+		>
+		  Next
+		</Button>
+	      </div>
+	    }
+	    {active === 'details' &&
+	      <div style={prevNextStyle}>
+		<Button type='button'
+		  onClick={() => setActive('picture')}
+		>
+		  Start over
+		</Button>
+	      </div>
+	    }
+	    {status === "FIRSTEDIT" && active === 'details' &&
+	      <BitAuth pay2AuthAddress={pay2AuthAddress}/>
+	    }
+	    <>
 	      <Form.Field>
 		<input type="hidden" name="address" value={urlParams.get('address')}/>
 	      </Form.Field>
-	      <Button primary size="massive" type='submit'>
-		<i class="save icon"></i>
-		Save</Button>
-	    </Form>
+	      {picture !== null &&
+	      <Form.Field>
+		<input type="hidden" name="picture" value={picture}/>
+	      </Form.Field>
+	      }
+	      { active === 'details' &&
+		<Button primary size="massive" type='submit'>
+		  <i class="save icon"></i>
+		  Save</Button>
+	      }
+	    </>
+	  </Form>
 	</Segment>
 	<Header as="h3" style={{color:"Gray"}}>
-	  <a href={'https://bitfundme.rocks/Campaign2?address='+urlParams.get('address')} >
+	  <a href={'https://bitfundme.rocks/Campaign?address='+urlParams.get('address')} >
 	    Campaign address: <Icon fitted name="bitcoin"/>{urlParams.get('address')}
 	  </a>
 	</Header>

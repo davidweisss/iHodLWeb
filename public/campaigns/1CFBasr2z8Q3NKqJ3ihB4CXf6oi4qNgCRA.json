@@ -3,6 +3,10 @@
   "cause": "",
   "who": "fsdfsf",
   "created": 1580506809122,
+  "startDate": 1580506809122,
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1qr2nrg5qk6jkrwyf4wsq2w8n6vhjtsncl5yj6dl",
+  "endDate": "",
   "goal": 10,
   "raised": {},
   "status": "IMPORTED"

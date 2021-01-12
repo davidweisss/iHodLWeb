@@ -4,7 +4,10 @@ const webpack = require("webpack");
 module.exports = {
      watch: true,
   entry: {
-    Campaign2: "./public/Campaign2.jsx",
+    DatePicker: "./public/DatePicker.jsx",
+    SignClaimCampaign: "./public/SignClaimCampaign.jsx",
+    NavMenu: "./public/NavMenu.jsx",
+    Campaign: "./public/Campaign.jsx",
     Search: "./public/Search.jsx",
     NewAddress: "./public/NewAddress.jsx",
     Donate: "./public/Donate.jsx",

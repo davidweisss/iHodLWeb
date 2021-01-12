@@ -7,10 +7,14 @@
   "picture": "1E69SvX2uvubbKuWJkDe9LhYe6NTg2nWbg.png",
   "newsItems": null,
   "created": 1599831159264,
+  "startDate": 1599831159264,
+  "endDate": "",
   "createdAtBlock": 647770,
-  "status": "CLAIMED",
+  "status": "FIRSTEDIT",
   "raised": null,
   "fundingStatus": null,
+  "claimed": true,
+  "pay2AuthAddress": "bc1qg4xh0yk9h74dlz0uczeyelk58hxl5uer8xjcl0",
   "ismine": {},
   "iswatchonly": {}
 }

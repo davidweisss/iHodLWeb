@@ -36,6 +36,7 @@ let BitAuth = (props) => {
 	  <QRCode style={{margin: '10px 10px 10px 20px'}} value={props.pay2AuthAddress} size="200"/>
 	  <br/>
 	  Pay to: {props.pay2AuthAddress}
+	  
 	  </div>
      }
     </Segment>

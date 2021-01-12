@@ -5,7 +5,10 @@
   "goal": 10,
   "picture": "35zLZS9Lehw3x3Vo89M5QwTbSr5WfV54iP.jpg",
   "created": 1581454378700,
-  "status": "IMPORTED",
+  "startDate": 1581454378700,
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1qc72vvw2f9ypr74lvfudvcr0v3hlwt7yc34zf0e",
   "raised": null,
   "ismine": {},
   "iswatchonly": {}

@@ -1,0 +1,25 @@
+{
+  "id": "18fyEQXaZQgCbNoE5Qjs6W7Pnqc9Yp4PQD",
+  "cause": "Donate Bitcoin to Human Rights Foundation",
+  "description": "Human Rights Foundation is the worldʼs first human rights organization which is strictly only accepting Bitcoin donations and uses Bitcoin to promote, protect, uphold human rights worldwide by developing bleeding edge platform both to educate the public about basic human rights, and to provide secure tools and communication channels to report human rights violations safely and anonymously.",
+  "who": "Human Rights Foundation",
+  "url": "https://humanrights.foundation/donate-bitcoin.html",
+  "goal": 0,
+  "picture": "18fyEQXaZQgCbNoE5Qjs6W7Pnqc9Yp4PQD.png",
+  "newsItems": null,
+  "created": 1608815738517,
+  "createdAtBlock": 662790,
+  "startDate": "1435752995000",
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "raised": null,
+  "fundingStatus": {
+    "receivedSinceCreation": null,
+    "withdrawnSinceCreation": null,
+    "balanceSinceCreation": null
+  },
+  "ismine": {},
+  "iswatchonly": {},
+  "pay2AuthAddress": "bc1qrjhsnxr77vhvx5uzfa75w6nc37n4sd6z29v6tl",
+  "claimed": false
+}

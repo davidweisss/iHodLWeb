@@ -5,8 +5,11 @@
   "goal": 0.04,
   "picture": "33xg3KwRCHvnvNNyhg6b3qZijQgmo6knEj.png",
   "created": 1586234589168,
+  "startDate": 1586234589168,
+  "endDate": "",
   "createdAtBlock": 624756,
-  "status": "IMPORTED",
+  "status": "FIRSTEDIT",
+  "pay2AuthAddress": "bc1qecumtsp7nc8k97mpmary6xqh5jdcw74e4g4hmp",
   "raised": "0",
   "ismine": {},
   "iswatchonly": {}

@@ -5,9 +5,12 @@ type Campaign {
   description: String
   goal: Float
   who: String
+  url: String
   picture: String
   created: String
   createdAtBlock: String
+  startDate: String
+  endDate: String
   status: String
   raised: String
   fundingStatus: Funding
@@ -34,10 +37,12 @@ input updateMediaDetailsInput {
   cause: String
   goal: Float
   who: String
+  url: String
+  startDate: String
+  endDate: String
   description: String
   picture: String
 }
-
 
 input PopNewsItemInput {
   newsItem: String
@@ -56,5 +61,6 @@ type Query {
   getCampaign(id: String): Campaign 
   getCampaigns(searchTerm: String): [Campaign] 
   getAllCampaigns: [Campaign] 
+  getPay2AuthTx(id: String, tip: Float, confirmedInNBlocks: Int,  txMessage: String): Campaign
   getRedeemTx(id: String, tipPercent: Float, confirmedInNBlocks: Int, destAddr: String, txMessage: String): Campaign
 }

@@ -1,13 +1,22 @@
 {
   "id": "14RLePN1TwWKWAg8Atsn22HiF1Lp7BnmM9",
   "cause": "2020 Server Costs",
+  "description": "Help keep BitFundMe running by chipping in to maintain the servers",
   "who": "https://iHodL.rocks",
   "goal": 0.15,
   "picture": "14RLePN1TwWKWAg8Atsn22HiF1Lp7BnmM9.jpg",
-  "raised": {},
   "created": 1580590660627,
+  "startDate": "1577912260000",
+  "endDate": "1609369200000",
   "status": "FIRSTEDIT",
-  "pay2AuthAddress": "bc1q280n8ckek4dlfv5rhskx866jnnt07lrrrdjgh7",
+  "raised": null,
+  "fundingStatus": {
+    "receivedSinceCreation": null,
+    "withdrawnSinceCreation": null,
+    "balanceSinceCreation": null
+  },
   "ismine": {},
-  "iswatchonly": {}
+  "iswatchonly": {},
+  "pay2AuthAddress": "bc1q280n8ckek4dlfv5rhskx866jnnt07lrrrdjgh7",
+  "claimed": true
 }

@@ -1,0 +1,25 @@
+{
+  "id": "bc1qy6fhm8p00p3h3w5rrcp2h2wejeeqn7x6y7xs2p",
+  "cause": "Legal fees and development",
+  "description": "Most donations will go towards legal fees to defend against the baseless lawsuit filed against us and to pursue our own counterclaims and lawsuit. There are also other costs involved in defending our trademarks, etc. Bringing this to an end will let us focus on development again.\n\nWe also need money to fund development work. Developers need powerful workstations, test devices and ideally income to work full-time on the project. There are currently 2 full-time GrapheneOS developers. If we had more donations, we could afford to bring more people on board.\n\nSee [this Twitter thread](https://twitter.com/GrapheneOS/status/1324470375502237696)\n\nAnd [this one](https://twitter.com/GrapheneOS/status/1341523656363655169)",
+  "who": "GrapheneOS",
+  "url": "https://grapheneos.org",
+  "goal": 0,
+  "picture": "bc1qy6fhm8p00p3h3w5rrcp2h2wejeeqn7x6y7xs2p.png",
+  "newsItems": null,
+  "created": 1608716952878,
+  "createdAtBlock": 662622,
+  "startDate": "1604224167000",
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "raised": null,
+  "fundingStatus": {
+    "receivedSinceCreation": null,
+    "withdrawnSinceCreation": null,
+    "balanceSinceCreation": null
+  },
+  "ismine": {},
+  "iswatchonly": {},
+  "pay2AuthAddress": "bc1q5jsx9twxuqv2mtxj4g3nxdc4f6xk72k54fz9kz",
+  "claimed": false
+}

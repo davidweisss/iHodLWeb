@@ -1,27 +1,24 @@
 {
   "id": "1KfuAQ5UiX2tUHy6Fz6ScoKZ9zH2DytBwP",
-  "cause": "Test",
-  "description": "Hey",
-  "who": "Testingot",
-  "goal": 1,
-  "picture": "tmp-1KfuAQ5UiX2tUHy6Fz6ScoKZ9zH2DytBwP.jpeg",
-  "newsItems": [
-    {
-      "created": "1607599113502",
-      "message": "Haaaallpppp"
-    },
-    {
-      "created": "1607599536417",
-      "message": "Paid"
-    }
-  ],
-  "created": 1607598926637,
-  "createdAtBlock": 660746,
-  "status": "FIRSTEDIT",
+  "cause": null,
+  "description": null,
+  "who": null,
+  "goal": null,
+  "picture": null,
+  "newsItems": null,
+  "created": 1608642361349,
+  "createdAtBlock": 662492,
+  "startDate": null,
+  "endDate": null,
+  "status": "IMPORTED",
   "raised": null,
-  "fundingStatus": null,
-  "ismine": {},
-  "iswatchonly": {},
-  "pay2AuthAddress": "bc1q3t7f76r3ccpnvt33ptvkhgwqqcznrqepxj70a5",
-  "pendingEditForAddress": null
+  "fundingStatus": {
+    "receivedSinceCreation": null,
+    "withdrawnSinceCreation": null,
+    "balanceSinceCreation": null
+  },
+  "ismine": null,
+  "iswatchonly": null,
+  "pay2AuthAddress": "bc1q9894lgesy7xfws9hd0weszhac4cdvdt6uwz3c0",
+  "claimed": false
 }

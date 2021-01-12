@@ -90,7 +90,7 @@ let NewsItem = (gqlQuery) => {
 	    Post</Button>
 	</Form>
 	<Header as="h3" style={{color:"Gray"}}>
-	  <a href={'https://bitfundme.rocks/Campaign2?address='+urlParams.get('address')} >
+	  <a href={'https://bitfundme.rocks/Campaign?address='+urlParams.get('address')} >
 	    Campaign address: <Icon fitted name="bitcoin"/>{urlParams.get('address')}
 	  </a>
 	</Header>

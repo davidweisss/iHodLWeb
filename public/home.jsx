@@ -83,7 +83,7 @@ class HomepageLayout extends React.Component {
 
 	<div style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', display: 'flex', margin:'-65px 0 0 30px'}}>
 	<div style={{maxWidth: '300px', margin:'0 35px 35px 0'}}>
-	  <Image as='a' href='Campaign2?address=33xg3KwRCHvnvNNyhg6b3qZijQgmo6knEj' style={{transform: 'rotate(-2deg)'}} size='large' src='product.png' />
+	  <Image as='a' href='Campaign?address=33xg3KwRCHvnvNNyhg6b3qZijQgmo6knEj' style={{transform: 'rotate(-2deg)'}} size='large' src='product.png' />
 	</div>
 	  <div style={{maxWidth: '300px', margin:'35px 35px 0 35px'}}>
 	  <p style={{ fontSize: '1.33em' }}>

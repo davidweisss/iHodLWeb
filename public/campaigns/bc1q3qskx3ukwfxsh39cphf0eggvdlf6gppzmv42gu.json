@@ -1,9 +1,22 @@
 {
   "id": "bc1q3qskx3ukwfxsh39cphf0eggvdlf6gppzmv42gu",
   "cause": "Security bounty",
+  "description": "Hack this website's server and claim the bounty",
   "who": "https://ihodl.rocks",
   "goal": 10,
   "picture": "bc1q3qskx3ukwfxsh39cphf0eggvdlf6gppzmv42gu.jpg",
   "created": 1580506809122,
-  "status": "IMPORTED"
+  "startDate": "1577914809000",
+  "endDate": "",
+  "status": "FIRSTEDIT",
+  "raised": null,
+  "fundingStatus": {
+    "receivedSinceCreation": null,
+    "withdrawnSinceCreation": null,
+    "balanceSinceCreation": null
+  },
+  "ismine": {},
+  "iswatchonly": {},
+  "pay2AuthAddress": "bc1qktpvzfc0huv7g3l4uq8m8qphathld2qmysu4lw",
+  "claimed": true
 }
